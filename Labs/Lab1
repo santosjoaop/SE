@@ -19,34 +19,38 @@
 #include <stdio.h>
 
 #define P022 6
+#define PCGPIO 15
+#define GPIO_FUNC 12
 
 // TODO: insert other include files here
 
 // TODO: insert other definitions and declarations here
 
-void delay(int ms){
 
+void delay(int ms){
 	for (int i = 0; i < ms * 100000 ;i++);
 }
 
-
 int main(void) {
-
     printf("Hello World\n");
+    //P0[22] - LED
 
-    // Force the counter to be placed into memory
-    // Enter an infinite loop, just incrementing a counter
+    //garante que GPIO tem o clock ativo
+    LPC_SC->PCONP |= (1 << PCGPIO);
+
+    //garante que o pino esta no funcao de GPIO (00)
+    LPC_PINCON->PINSEL1 &= ~(3 << GPIO_FUNC );
+
+
+
 
     LPC_GPIO0 -> FIODIR |= (1<<22);
 
     while(1) {
-    	//P0[22] - LED
-
-    	LPC_GPIO0 -> FIOSET2 |= (1<<P022); //LPC_GPIO0 -> FIOSET |= (1<<22)
+    	LPC_GPIO0 -> FIOSET2 = (1<<P022); //LPC_GPIO0 -> FIOSET |= (1<<22)
     	delay(500);
-    	LPC_GPIO0 -> FIOCLR2 |= (1<<P022);
+    	LPC_GPIO0 -> FIOCLR2 = (1<<P022);
     	delay(500);
     }
     return 0 ;
 }
-
