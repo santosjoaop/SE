@@ -9,9 +9,10 @@
 #endif
 #include "led.h"
 
+//DEFINES PARA CONTAS
 #define PCGPIO 15
 #define GPIO_FUNC 12
-#define P022 6
+#define P022 22
 
 
 /* Faz a iniciação do sistema para permitir a manipulação do estado LED do sistema de
@@ -39,19 +40,19 @@ bool LED_GetState(void){
 /* Acende o LED. */
 void LED_On(void){
 
-	LPC_GPIO0 -> FIOSET2 = (1<<P022);
+	LPC_GPIO0 -> FIOSET = (1<<P022);
 }
 
 /* Apaga o LED. */
 void LED_Off(void){
 
-	LPC_GPIO0 -> FIOCLR2 = (1<<P022);
+	LPC_GPIO0 -> FIOCLR = (1<<P022);
 }
 
 /* Troca o estado do LED. Se estiver aceso apaga o LED, caso contrario acende o LED. */
-void LED_Toggle(void){ //XOR
+void LED_Toggle(void){
 
-	LPC_GPIO0 -> FIODIR ^= '1';
+	LPC_GPIO0 -> FIOPIN ^= (1<<P022);
 }
 
 
