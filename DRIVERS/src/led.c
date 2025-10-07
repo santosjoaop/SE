@@ -26,7 +26,7 @@ void LED_Init(bool state){
 	//garante que o pino esta no funcao de GPIO (00)
 	LPC_PINCON->PINSEL1 &= ~(3 << GPIO_FUNC );
 
-	LPC_GPIO0 -> FIODIR |= (1<<22);
+	LPC_GPIO0 -> FIODIR |= (1<<P022);
 
 	if(state == true){
 		LPC_GPIO0 -> FIOSET = (1<<P022);
