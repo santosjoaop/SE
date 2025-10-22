@@ -31,16 +31,20 @@ int main(void) {
 
 
     DELAY_Init();
+    LCDGPIO_Init(2,7);												/**Iniciamos os GPIO2 2..7*/
     LCDText_Init();
     while(1){
     	int t_atual = DELAY_GetElapsedMillis(0);
+    	int line = 0;
     	while(DELAY_GetElapsedMillis(t_atual) <= ON_TIME){
 
     		LCDText_WriteString(string);
     		DELAY_Milliseconds(SWITCH_LINES);
-    		//TROCA CURSOR POS
+    		LCDText_SetCursor(line, 0);
 
+    		line = line ? 0 : 1;									/**mudar a linha*/
     	}
+
     	int t_passado = DELAY_GetElapsedMillis(0);
     	while(DELAY_GetElapsedMillis(t_passado) <= OFF_TIME){
     		LCDText_Clear();
