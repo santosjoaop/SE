@@ -15,110 +15,151 @@
 #include "delay.h"
 
 
-#define PCGPIO 15													/**MACRO ativar clock do GPIO*/
-#define GPIO_FUNC 12												/**MACRO mexer na função do PIN*/
+#define PCGPIO (1 << 15)													/**MACRO ativar clock do GPIO*/
+#define GPIO_FUNC ~(3 << 12 )												/**MACRO mexer na função do PIN*/
 
-#define SET_CURSOR_FLAG 0b00010000
-#define CLEAR_FLAG 0b00001011
+#define CLEAR 0x01
+#define CURSOR_MASK 0x80
 
-#define P22 2
-#define P23 3
+#define GPIO_LCD_FIRST 2													/**Para usar em ciclos snedo que estão todos seguidos*/
+#define GPIO_LCD_LAST 7
 
 
-void LCDGPIO_Init(int start, int last){
-	LPC_SC->PCONP |= (1 << PCGPIO);									/**ativar clock do GPIO*/
+#define RS 	(1 << 2)
+#define E 	(1 << 3)
+#define PB4 (1 << 4)
+#define PB5 (1 << 5)
+#define PB6 (1 << 6)
+#define PB7 (1 << 7)
 
-	LPC_PINCON->PINSEL2 &= ~(3 << GPIO_FUNC );						/**escolher função do PIN*/
 
-	for(int i = start; i <= last ; i++){
-		LPC_GPIO2 -> FIODIR |= (1<<i);
+void LCD_PulseEnable(void){
+    LPC_GPIO0->FIOSET = E;
+    DELAY_Microseconds(5);
+    LPC_GPIO0->FIOCLR = E;
+    DELAY_Microseconds(5);
+}
 
+
+
+void LCDGPIO_Init(){
+	LPC_SC->PCONP |= PCGPIO;									/**ativar clock do GPIO*/
+	LPC_PINCON->PINSEL2 &= GPIO_FUNC;						/**escolher função do PIN*/
+
+	for(int i = GPIO_LCD_FIRST; i <= GPIO_LCD_LAST; i++){
+		LPC_GPIO2 -> FIODIR |= (1 << i);
 	}
+
+	LPC_GPIO2 -> FIOCLR = (RS | E | PB4 | PB5 | PB6 | PB7);
 }
 
 
 
 
 static void LCDText_WriteNibble(bool rs, uint8_t value){
-	LPC_GPIO2 -> FIOSET = (1<<P22);//ATIVAR RS;
-	LPC_GPIO2 -> FIOCLR = (1<<P23);//DESATIVAR ENABLE;
+	LPC_GPIO2 -> FIOCLR = (PB4 | PB5 | PB6 | PB7);
 
-	//Fazer clear ao display
-	
+	if(value & 0x10)LPC_GPIO2 -> FIOSET = PB4;
+	if(value & 0x20)LPC_GPIO2 -> FIOSET = PB5;
+	if(value & 0x40)LPC_GPIO2 -> FIOSET = PB6;
+	if(value & 0x80)LPC_GPIO2 -> FIOSET = PB7;
 
+	LCD_PulseEnable();
 
-	for(int i = 3, j = 4; i >= 0 ; i--){
-			j += i;													/*Indice dos P27..4**/
-			if((value >> i) & 1) LPC_GPIO2 -> FIOSET = (1<<j);
-			else LPC_GPIO2 -> FIOCLR = (1<<j);
-			DELAY_Milliseconds(100);
-	}
-
-	LPC_GPIO2 -> FIOSET = (1<<P23);//ATIVAR ENABLE;
-	DELAY_Milliseconds(300);
-	LPC_GPIO2 -> FIOCLR = (1<<P22);//DESATIVAR RS;
 }
 
 
 static void LCDText_WriteByte(int rs, unsigned char value){
 
-	//Shiftar parate alta para uma variavel
-	int parte_alta = 0;
-	LCDText_WriteNibble(0, parte_alta);
-	parte_alta = value;
-	LCDText_WriteNibble(0,value);
-}
+	if(rs)LPC_GPIO0->FIOSET = RS;
+	else LPC_GPIO0->FIOCLR = RS;
 
+	/**Escrever Nibble parte alta*/
+	LCDText_WriteNibble(0, value & 0xF0);				//FUN NIBBLE SEM bool rs
+
+	/**Escrever Nibble parte baixa*/
+	LCDText_WriteNibble(0, (value << 4) & 0xF0 );
+
+	DELAY_Microseconds(50);
+
+	if(value <= 0x03)DELAY_Milliseconds(10); 	/**Instruções "Clear display" e "Return home"* demoram mais tempo que as restantes*/
+}
 
 
 
 
 void LCDText_Init(void){
-	LCDGPIO_Init(2,7);
+	LCDGPIO_Init();							/**Init dos pinos GPIO as serem usados*/
 
+	DELAY_Milliseconds(50);
 
-	//funcionamento 8bits
-	DELAY_Milliseconds(20);
-	LCDText_WriteNibble(0, 3 << 4);
+	    LCDText_WriteNibble(1,0x03);  // 0x30 >> 4 = 0x03
+	    DELAY_Milliseconds(5);
 
-	DELAY_Milliseconds(5);
-	LCDText_WriteNibble(0, 3 << 4);
+	    LCDText_WriteNibble(1,0x03);
+	    DELAY_Microseconds(150);
 
-	DELAY_Milliseconds(1);
-	LCDText_WriteNibble(0, 3 << 4);
+	    LCDText_WriteNibble(1,0x03);
+	    DELAY_Microseconds(150);
 
+	    // Muda para modo 4-bit
+	    LCDText_WriteNibble(1,0x02);  // 0x20 >> 4 = 0x02
+	    DELAY_Microseconds(150);
 
-	LCDText_WriteNibble(0, 2 << 4);
-	//funcionamento 4bits
+	    // A partir daqui, envia comandos de 8 bits
 
+	    // Function Set: 4-bit, 2 linhas, 5x8
+	    //   DL=0 (4-bit), N=1 (2 linhas), F=0 (5x8)
+	    LCDText_WriteByte(1,0x28);
 
-	//efetuar resto
+	    // Display OFF (durante configuração)
+	    LCDText_WriteByte(1,0x08);
 
+	    // Clear Display
+	    LCDText_WriteByte(1,0x01);
+	    DELAY_Milliseconds(2);
 
+	    // Entry Mode: incrementar cursor, sem shift
+	    // 0x06 = 0b00000110
+	    LCDText_WriteByte(1,0x06);
+
+	    // Display ON: display ligado, cursor e blink desligados
+	    // 0x0C = 0b00001100
+	    LCDText_WriteByte(1,0x0C);
 
 }
 
 
 void LCDText_WriteChar(char ch){
-	LCDText_WriteByte(0, ch);
+	LCDText_WriteByte(1, ch);
 }
 
 
 void LCDText_WriteString(char *str){
+	if(!str) return;
+
 	for(int i = 0; str[i] != '\0'; i++){
 		LCDText_WriteByte(0, str[i]);
 	}
 }
 
 
-void LCDText_SetCursor(int row, int column){
-	//LCDText_WriteByte(0, SET_CURSOR_FLAG);
-	//Como afetar a linha certa
+int LCDText_SetCursor(int row, int column){
+	if(row < 0 || row > 1) return -1;
+	if(column < 0 || column > 15) return -2;
+
+	uint8_t pos;
+
+	if(!row) pos = 0x00 + column;
+	else pos = 0x40 + column;
+
+	LCDText_WriteByte(0, CURSOR_MASK | pos);
+	return 0;
 }
 
 
 void LCDText_Clear(void){
-	LCDText_WriteByte(0, CLEAR_FLAG);
+	LCDText_WriteByte(0, CLEAR);
 }
 
 
