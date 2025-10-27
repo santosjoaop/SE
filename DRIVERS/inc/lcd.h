@@ -28,13 +28,6 @@
 
 void LCDGPIO_Init();
 
-static void LCDText_WriteNibble(bool rs, uint8_t value);
-
-static void LCDText_WriteByte(int rs, unsigned char value);
-
-
-
-
 
 /**
  * @brief  Faz a iniciação do sistema para permitir o acesso ao periférico LCD de 2 linhas e 16 colunas,
@@ -62,7 +55,7 @@ void LCDText_WriteString(char *str);
  * @param row
  * @param column
  */
-int LCDText_SetCursor(int row, int column);
+void LCDText_SetCursor(int row, int column);
 
 
 /**
