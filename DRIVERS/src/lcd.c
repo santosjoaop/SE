@@ -32,11 +32,15 @@
 #define PB6 (1 << 6)
 #define PB7 (1 << 7)
 
+static void LCDText_WriteNibble(uint8_t value);
+
+static void LCDText_WriteByte(int rs, unsigned char value);
+
 
 void LCD_PulseEnable(void){
-    LPC_GPIO0->FIOSET = E;
+    LPC_GPIO2->FIOSET = E;
     DELAY_Microseconds(5);
-    LPC_GPIO0->FIOCLR = E;
+    LPC_GPIO2->FIOCLR = E;
     DELAY_Microseconds(5);
 }
 
@@ -54,15 +58,13 @@ void LCDGPIO_Init(){
 }
 
 
-
-
-static void LCDText_WriteNibble(bool rs, uint8_t value){
+static void LCDText_WriteNibble( uint8_t value){
 	LPC_GPIO2 -> FIOCLR = (PB4 | PB5 | PB6 | PB7);
 
-	if(value & 0x10)LPC_GPIO2 -> FIOSET = PB4;
-	if(value & 0x20)LPC_GPIO2 -> FIOSET = PB5;
-	if(value & 0x40)LPC_GPIO2 -> FIOSET = PB6;
-	if(value & 0x80)LPC_GPIO2 -> FIOSET = PB7;
+	if(value & 0x01)LPC_GPIO2 -> FIOSET = PB4;
+	if(value & 0x02)LPC_GPIO2 -> FIOSET = PB5;
+	if(value & 0x04)LPC_GPIO2 -> FIOSET = PB6;
+	if(value & 0x08)LPC_GPIO2 -> FIOSET = PB7;
 
 	LCD_PulseEnable();
 
@@ -71,14 +73,16 @@ static void LCDText_WriteNibble(bool rs, uint8_t value){
 
 static void LCDText_WriteByte(int rs, unsigned char value){
 
-	if(rs)LPC_GPIO0->FIOSET = RS;
-	else LPC_GPIO0->FIOCLR = RS;
+	if(rs == 1)
+		LPC_GPIO2->FIOSET = RS;
+	else
+		LPC_GPIO2->FIOCLR = RS;
 
 	/**Escrever Nibble parte alta*/
-	LCDText_WriteNibble(0, value & 0xF0);				//FUN NIBBLE SEM bool rs
+	LCDText_WriteNibble((value & 0xF0) >> 4);				//FUN NIBBLE SEM bool rs
 
 	/**Escrever Nibble parte baixa*/
-	LCDText_WriteNibble(0, (value << 4) & 0xF0 );
+	LCDText_WriteNibble(value & 0xF);
 
 	DELAY_Microseconds(50);
 
@@ -89,43 +93,42 @@ static void LCDText_WriteByte(int rs, unsigned char value){
 
 
 void LCDText_Init(void){
-	LCDGPIO_Init();							/**Init dos pinos GPIO as serem usados*/
+	LCDGPIO_Init();/**Init dos pinos GPIO as serem usados*/
+
+	LPC_GPIO2 -> FIOCLR = (RS | E | PB4 | PB5 | PB6 | PB7);
 
 	DELAY_Milliseconds(50);
 
-	    LCDText_WriteNibble(1,0x03);  // 0x30 >> 4 = 0x03
+	    LCDText_WriteNibble(0x03);  // 0x30 >> 4 = 0x03
 	    DELAY_Milliseconds(5);
 
-	    LCDText_WriteNibble(1,0x03);
+	    LCDText_WriteNibble(0x03);
 	    DELAY_Microseconds(150);
 
-	    LCDText_WriteNibble(1,0x03);
+	    LCDText_WriteNibble(0x03);
 	    DELAY_Microseconds(150);
 
 	    // Muda para modo 4-bit
-	    LCDText_WriteNibble(1,0x02);  // 0x20 >> 4 = 0x02
+	    LCDText_WriteNibble(0x02);  // 0x20 >> 4 = 0x02
 	    DELAY_Microseconds(150);
 
-	    // A partir daqui, envia comandos de 8 bits
+	    // comandos de 8 bits
+	    LCDText_WriteByte(0,0x28);
 
-	    // Function Set: 4-bit, 2 linhas, 5x8
-	    //   DL=0 (4-bit), N=1 (2 linhas), F=0 (5x8)
-	    LCDText_WriteByte(1,0x28);
-
-	    // Display OFF (durante configuração)
-	    LCDText_WriteByte(1,0x08);
+	    // Display OFF
+	    LCDText_WriteByte(0,0x08);
 
 	    // Clear Display
-	    LCDText_WriteByte(1,0x01);
-	    DELAY_Milliseconds(2);
+	    LCDText_WriteByte(0,0x01);
+	    DELAY_Milliseconds(5);
 
 	    // Entry Mode: incrementar cursor, sem shift
 	    // 0x06 = 0b00000110
-	    LCDText_WriteByte(1,0x06);
+	    LCDText_WriteByte(0,0x06);
 
-	    // Display ON: display ligado, cursor e blink desligados
+	    // Display ON: cursor e blink desligados
 	    // 0x0C = 0b00001100
-	    LCDText_WriteByte(1,0x0C);
+	    LCDText_WriteByte(0,0x0E);
 
 }
 
@@ -134,32 +137,31 @@ void LCDText_WriteChar(char ch){
 	LCDText_WriteByte(1, ch);
 }
 
-
 void LCDText_WriteString(char *str){
 	if(!str) return;
 
 	for(int i = 0; str[i] != '\0'; i++){
-		LCDText_WriteByte(0, str[i]);
+		LCDText_WriteChar(str[i]);
 	}
 }
 
 
-int LCDText_SetCursor(int row, int column){
-	if(row < 0 || row > 1) return -1;
-	if(column < 0 || column > 15) return -2;
-
+void LCDText_SetCursor(int row, int column){
 	uint8_t pos;
 
-	if(!row) pos = 0x00 + column;
-	else pos = 0x40 + column;
+	if(row == 0)
+		pos = 0x00 + column;
+	else
+		pos = 0x40 + column;
 
 	LCDText_WriteByte(0, CURSOR_MASK | pos);
-	return 0;
+
 }
 
 
 void LCDText_Clear(void){
 	LCDText_WriteByte(0, CLEAR);
+	DELAY_Milliseconds(5);
 }
 
 
