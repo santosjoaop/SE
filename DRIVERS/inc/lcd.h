@@ -26,7 +26,7 @@
 #include <stdbool.h>
 
 
-void LCDGPIO_Init(int start, int last);
+void LCDGPIO_Init();
 
 static void LCDText_WriteNibble(bool rs, uint8_t value);
 
@@ -62,7 +62,7 @@ void LCDText_WriteString(char *str);
  * @param row
  * @param column
  */
-void LCDText_SetCursor(int row, int column);
+int LCDText_SetCursor(int row, int column);
 
 
 /**
