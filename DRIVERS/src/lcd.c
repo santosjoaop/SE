@@ -13,6 +13,8 @@
 #endif
 #include "lcd.h"
 #include "delay.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 
 #define PCGPIO (1 << 15)													/**MACRO ativar clock do GPIO*/
@@ -86,7 +88,7 @@ static void LCDText_WriteByte(int rs, unsigned char value){
 
 	DELAY_Microseconds(50);
 
-	if(value <= 0x03)DELAY_Milliseconds(10); 	/**Instruções "Clear display" e "Return home"* demoram mais tempo que as restantes*/
+	if(value <= 0x03)DELAY_Milliseconds(5); 	/**Instruções "Clear display" e "Return home"* demoram mais tempo que as restantes*/
 }
 
 
@@ -128,12 +130,17 @@ void LCDText_Init(void){
 
 	    // Display ON: cursor e blink desligados
 	    // 0x0C = 0b00001100
-	    LCDText_WriteByte(0,0x0E);
+	    // 0x0E para cursor ligado
+	    LCDText_WriteByte(0,0x0C);
 
 }
 
 
 void LCDText_WriteChar(char ch){
+	if(ch == '\n'){
+		LCDText_SetCursor(1,0);
+		return;
+	}
 	LCDText_WriteByte(1, ch);
 }
 
@@ -161,8 +168,17 @@ void LCDText_SetCursor(int row, int column){
 
 void LCDText_Clear(void){
 	LCDText_WriteByte(0, CLEAR);
-	DELAY_Milliseconds(5);
+	//DELAY_Milliseconds(5);
 }
 
 
-//void LCDText_Printf(char *fmt, ...);
+void LCDText_Printf(char *fmt, ...){
+    char buffer[64];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    LCDText_WriteString(buffer);
+}
