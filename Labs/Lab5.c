@@ -25,6 +25,7 @@
 
 /* Features/Problems
  *
+ * INIT COMO DEVE SER CARALHO
  * Screen flicker
  * Weekdays initials
  * Only change different value
