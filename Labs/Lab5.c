@@ -1,14 +1,13 @@
-/*
- * Copyright 2022 NXP
- * NXP confidential.
- * This software is owned or controlled by NXP and may only be used strictly
- * in accordance with the applicable license terms.  By expressly accepting
- * such terms or by downloading, installing, activating and/or otherwise using
- * the software, you are agreeing that you have read, and that you agree to
- * comply with and are bound by, such license terms.  If you do not agree to
- * be bound by the applicable license terms, then you may not retain, install,
- * activate or otherwise use the software.
- */
+/**
+ * @file Lab5.c
+ * @author Grupo 2
+ * @brief
+ * @version 1.0
+ * @date 2025-10-19
+ *
+ * @copyright Copyright (c) 2025
+ * 
+ */
 
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
@@ -24,21 +23,42 @@
 #include "rtc.h"
 
 
-int main(void){
+/* Features/Problems
+ *
+ * Screen flicker
+ * Weekdays initials
+ * Only change different value
+ * Substituir DELAY por alarme
+ * */
 
+
+//int weekday_string(int wday);		//Strings com as inicias dos dias da semana
+
+
+void LCDTime_Print(struct tm data){
+	LCDText_Printf("    %02d:%02d:%02d    \n", data.tm_hour,data.tm_min,data.tm_sec);
+	LCDText_Printf("   %02d/%02d/%04d   ", data.tm_mday, data.tm_mon + 1, data.tm_year + 1900);
+}
+
+
+
+int main(void) {
     printf("Hello World\n");
 
-    LCDText_Init(void);
-    time_t now = time(NULL);
-    RTC_Init(now);
+    DELAY_Init();
+
+    LCDText_Init();
+
+    RTC_Init(time(NULL));
+    struct tm now = {0};
 
     while(1){
+        RTC_GetTimeDate(&now);
 
-    	void LCDText_Printf("%d:%d:%d %d/%d",	LPC_RTC -> HOUR, LPC_RTC -> MIN, LPC_RTC -> SEC
-    											LPC_RTC -> DAY, LPC_RTC -> MON);
-    	DELAY_Milliseconds(1000);
+        LCDText_Clear();
+        LCDTime_Print(now);
 
-
+        DELAY_Milliseconds(1000);				//USAR ALARM RTC SECONDS???
     }
 
     return 0;
