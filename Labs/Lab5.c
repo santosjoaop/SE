@@ -29,7 +29,7 @@
  * Screen flicker 2
  * Weekdays initials 3
  * Only change different value 2
- * Substituir DELAY por alarme 1
+ * Substituir DELAY por alarme 1 				DONE
  * */
 
 
@@ -53,11 +53,12 @@ int main(void) {
     struct tm now = {0};
 
     while(1){
-        RTC_GetTimeDate(&now);
-        LCDText_Clear();
-        LCDTime_Print(now);
-
-        DELAY_Milliseconds(1000);				//USAR ALARM RTC SECONDS???
+    	if(LPC_RTC->ILR & (1 << 0)){			//verificar se house interrupt de incremneto de segundos
+    		LPC_RTC->ILR |= (1 << 0); 			//clear ao registo de incremento
+			RTC_GetTimeDate(&now);
+			LCDText_Clear();
+			LCDTime_Print(now);
+    	}
     }
 
     return 0;
