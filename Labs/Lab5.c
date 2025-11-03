@@ -23,13 +23,13 @@
 #include "rtc.h"
 
 
-/* Features/Problems
+/*Features/Problems
  *
- * INIT COMO DEVE SER CARALHO
- * Screen flicker
- * Weekdays initials
- * Only change different value
- * Substituir DELAY por alarme
+ *Init como deve ser 2
+ * Screen flicker 2
+ * Weekdays initials 3
+ * Only change different value 2
+ * Substituir DELAY por alarme 1
  * */
 
 
@@ -47,15 +47,13 @@ int main(void) {
     printf("Hello World\n");
 
     DELAY_Init();
-
     LCDText_Init();
-
-    RTC_Init(time(NULL));
+    RTC_Init(time(NULL));						//apenas funciona com pc ligago
+    ///RTC_Init(1762180178);						//independente
     struct tm now = {0};
 
     while(1){
         RTC_GetTimeDate(&now);
-
         LCDText_Clear();
         LCDTime_Print(now);
 
