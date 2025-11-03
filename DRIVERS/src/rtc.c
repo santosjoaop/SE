@@ -19,18 +19,21 @@
 
 #define PCRTC (1 << 9)
 
-#define MASK_SECONDS 0x3F  // (1<<6)-1
-#define MASK_MINUTES 0x3F
-#define MASK_HOURS   0x1F
-#define MASK_DAYS    0x1F
-#define MASK_MONTHS  0x0F
-#define MASK_YEARS   0xFFF
+#define MASK_SECONDS 0x3F  	//0b0011 1111
+#define MASK_MINUTES 0x3F	//0b0011 1111
+#define MASK_HOURS   0x1F	//0b0001 1111
+#define MASK_DAYS    0x1F	//0b0001 1111
+#define MASK_MONTHS  0x0F	//0b0000 1111
+#define MASK_YEARS   0xFFF	//0b1111 1111 1111
 
 
 
 void RTC_Init(time_t seconds){//XXX
 	//Ativar o clock do RTC
 	LPC_SC->PCONP |= PCRTC;
+
+	LPC_RTC->CIIR = (1 << 0);											//Ativar enable de incrementos de segundo
+	LPC_RTC->ILR  = 0x01;
 
 	//REGISTO NÂO QUERO ALARMES ETC
 
