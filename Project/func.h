@@ -27,7 +27,9 @@
 
 
 
-void LCDTime_Print(struct tm data);
+void LCDTime_Print(struct tm* data, int BlinkField);
+
+int ValidDate(struct tm* data);
 
 int ChangeTime(struct tm* data ,int field, int a);
 
@@ -37,7 +39,7 @@ void Inits(void);
 
 void Operation_MODE(void);
 
-void Config_MODE(void);
+int Config_MODE(void);
 
 
 #endif /* _NAV7BTN_H_ */
