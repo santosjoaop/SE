@@ -24,6 +24,21 @@
 #include "rtc.h"
 #include "func.h"
 
+/*TODO:
+ *
+ * BLINK CAMPO A SER ALTERADO
+ * carregar no botão meio bugado (ficar a carregar continuamente funciona bastante bem)
+ * COVERS
+ * tirar flicker no LCD
+ * sliders de volume
+ * mostardor frequencia / incrementador freq
+ *
+ * MAIN de acordo com o UML
+ * criar função rtc setdate("hh:mm DD/MM/YYYY" )
+ * funç~´ao get date STRING
+ */
+
+
 
 
 
@@ -32,9 +47,15 @@ int main(void) {
 
     Inits();
     while(1){
+    	//INIT COVER
     	Operation_MODE();
-    	//Menu_MODE
+    	///Menu_MODE
     	Config_MODE();
+    	//if == 0  CANCEL
+    	//if == -1 INVALID DATE/CANCEL
+    	//if == 1  VALID DATE/SAVE
+
+
     }
 
     return 0;
