@@ -27,9 +27,9 @@
 /*TODO:
  *
  * BLINK CAMPO A SER ALTERADO
- * carregar no botão meio bugado (ficar a carregar continuamente funciona bastante bem)
+ * carregar no botão super rapido ???
  * COVERS
- * tirar flicker no LCD
+ * tirar flicker no LCD  							FEITO
  * sliders de volume
  * mostardor frequencia / incrementador freq
  *
@@ -44,12 +44,17 @@
 
 int main(void) {
     printf("Hello World\n");
-
     Inits();
+
+    //INIT COVER
+    LCDText_Clear();
+	LCDText_Printf("Projecto SE\nGrupo 2");
+	DELAY_Milliseconds(5000);
+
     while(1){
-    	//INIT COVER
     	Operation_MODE();
-    	///Menu_MODE
+    	Menu_MODE();
+    	//DELAY entre modos evitar problemas de inputs no proximo
     	Config_MODE();
     	//if == 0  CANCEL
     	//if == -1 INVALID DATE/CANCEL
