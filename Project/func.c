@@ -21,38 +21,49 @@
 
 
 void LCDTime_Print(struct tm* data, int BlinkField, int changes){
-	if(BlinkField < 0)LCDText_Printf("%02d:%02d %02d/%02d/%04d",data->tm_hour,data->tm_min,data->tm_mday,data->tm_mon + 1,data->tm_year + 1900);
+	char buf[20];
+	sprintf(buf,"%02d:%02d %02d/%02d/%04d", data->tm_hour, data->tm_min, data->tm_mday, data->tm_mon + 1, data->tm_year + 1900);
+
+	if(BlinkField < 0){
+		LCDText_Clear();
+		LCDText_Printf("%s", buf);
+	}
 	else{
-		while(changes == 0){
-			int t_atual = DELAY_GetElapsedMillis(0);
-			static int blink = 0;
+		static uint32_t lastBlinkTime = 0;
+		static int blinkState = 0;
+		static int prevBlinkState = -1;
 
-			char buf[20];
-				sprintf(buf, "%02d:%02d %02d/%02d/%04d", data->tm_hour,data->tm_min,data->tm_mday,data->tm_mon + 1,data->tm_year + 1900);
-
-
-				if(blink){
-						switch(BlinkField){
-							case 0: buf[0]=buf[1]=' '; break;
-							case 1: buf[3]=buf[4]=' '; break;
-							case 2: buf[6]=buf[7]=' '; break;
-							case 3: buf[9]=buf[10]=' '; break;
-							case 4: buf[12]=buf[13]=buf[14]=buf[15]=' '; break;
-						}
-				}
-				LCDText_Printf("%s", buf);
-				if(DELAY_GetElapsedMillis(t_atual) >= 250) blink = blink^1;
+		if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
+			blinkState ^= 1;  // toggle on/off
+			lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
 		}
 
-
-
+		if(changes || blinkState != prevBlinkState){
+			if(blinkState == 0){ // hide selected field
+				switch(BlinkField){
+					case 0: buf[0] = buf[1] = ' '; break;               			//horas
+					case 1: buf[3] = buf[4] = ' '; break;               			//minutos
+					case 2: buf[6] = buf[7] = ' '; break;               			//dias
+					case 3: buf[9] = buf[10] = ' '; break;              			//mes
+					case 4: buf[12] = buf[13] = buf[14] = buf[15] = ' '; break; 	//ano
+				}
+			}
+			LCDText_Printf("%s", buf);
+			prevBlinkState = blinkState;
+		}
 	}
 }
 
-/*
+
 void LCDVolume_Print(int volume){
-	LCDText_Printf("%02d:%02d %02d/%02d/%04d",data->tm_hour,data->tm_min,data->tm_mday,data->tm_mon + 1,data->tm_year + 1900);
-}*/
+	char bar[20];
+	bar[0] = '-';
+	for(int i = 1; i < 15; i++)bar[i] = (i - 1 < volume ) ? '|' : ' ';
+	bar[15] = '+';
+	bar[16] = '\0';
+
+	LCDText_Printf("     VOLUME     \n%s", bar);
+}
 
 int ValidDate(struct tm* data){
 	int year = data->tm_year + 1900;
@@ -125,11 +136,36 @@ void Inits(void){
     //RTC_Init(1762180178);						//independente
 }
 
+/*
+void SetVolume_MODE(int *volume){
+	int t_atual = DELAY_GetElapsedMillis(0);
+
+	switch(NAVBTN_Read()){					//Leitura do butão
+		case NAVBTN_UP:						//Aumentar o volume
+			t_atual = DELAY_GetElapsedMillis(0);
+			if(*volume != 14) *volume++;
+			LCDVolume_Print(*volume);
+			DELAY_Milliseconds(1000);
+			break;
+
+		case NAVBTN_DOWN:					//Baixar o volume
+			t_atual = DELAY_GetElapsedMillis(0);
+			if(*volume != 0) *volume--;
+			LCDVolume_Print(*volume);
+			DELAY_Milliseconds(1000);
+			break;
+
+		default:
+			if(DELAY_GetElapsedMillis(t_atual) <= 2000) return;
+
+	}
+}*/
+
 
 
 void Operation_MODE(void){
 	struct tm now = {0};
-	//int volume = 0;
+	int volume = 0;
 	while(1){
 		if(LPC_RTC->ILR & (1 << 0)){			//verificar se house interrupt de incremneto de segundos
 			LPC_RTC->ILR |= (1 << 0); 			//clear ao registo de incremento
@@ -140,15 +176,15 @@ void Operation_MODE(void){
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
 				LCDText_Clear();
-				LCDText_Printf("Volume +");
-				/*if(sound != 14) volume++;
-				LCDVolume_Printf(volume);*/
+				if(volume != 14) volume++;
+				LCDVolume_Print(volume);
 				DELAY_Milliseconds(1000);
 				break;
 
 			case NAVBTN_DOWN:					//Baixar o volume
 				LCDText_Clear();
-				LCDText_Printf("Volume -");
+				if(volume != 0) volume--;
+				LCDVolume_Print(volume);
 				DELAY_Milliseconds(1000);
 				break;
 
@@ -181,6 +217,8 @@ int Menu_MODE(void){
 	DELAY_Milliseconds(3000);
 	return 0;
 }
+
+
 
 
 int Config_MODE(void){
