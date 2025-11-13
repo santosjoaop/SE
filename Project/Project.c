@@ -26,16 +26,12 @@
 
 /*TODO:
  *
- * BLINK CAMPO A SER ALTERADO
  * carregar no botão super rapido ???
- * COVERS
- * tirar flicker no LCD  							FEITO
- * sliders de volume
+ * COVERS 							FEITO
  * mostardor frequencia / incrementador freq
  *
- * MAIN de acordo com o UML
- * criar função rtc setdate("hh:mm DD/MM/YYYY" )
- * funç~´ao get date STRING
+ * MAIN de acordo com o UML ??
+ * Fazer refresh a cada minuto em vez de segundo
  */
 
 
