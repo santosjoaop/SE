@@ -29,6 +29,10 @@
 
 void LCDTime_Print(struct tm* data, int BlinkField);
 
+void LCDVolume_Print(int volume);
+
+
+
 int ValidDate(struct tm* data);
 
 int ChangeTime(struct tm* data ,int field, int a);
@@ -38,6 +42,8 @@ int ChangeTime(struct tm* data ,int field, int a);
 void Inits(void);
 
 void Operation_MODE(void);
+
+int Menu_MODE(void);
 
 int Config_MODE(void);
 
