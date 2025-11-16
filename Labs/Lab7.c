@@ -37,10 +37,10 @@ int main(void) {
     char name2[20] = "Santos";
 
     ///CUIDADO "Should be 256 | 512 | 1024 | 4096"
-    FLASH_WriteData(ADDR_START_SECTOR_29, &group , sizeof(group));
+    FLASH_WriteData((void*)ADDR_START_SECTOR_29, &group , sizeof(group));
 
     ///CUIDADO "Number of bytes to be compared; should be a multiple of 4"
-    FLASH_VerifyData(ADDR_START_SECTOR_29, &group , sizeof(group));
+    FLASH_VerifyData((void*)ADDR_START_SECTOR_29, &group , sizeof(group));
 
     LCDText_Printf("Grupo:%d\n%s %s", group, name1, name2);
 
