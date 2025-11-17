@@ -30,7 +30,7 @@ unsigned int FLASH_EraseSector(unsigned int sector){
 	if(OUT[0] != 0) return OUT[0];
 
 	//clearing the sector
-	unsigned int IN2[5] = {52, sector, sector, SystemCoreClock};
+	unsigned int IN2[5] = {52, sector, sector, SystemCoreClock/1000};
 	iap_entry(IN2, OUT);
 	return OUT[0];
 }
@@ -42,7 +42,7 @@ unsigned int FLASH_WriteData(void *dstAddr, void *srcAddr, unsigned int size){
 
 	///CUIDADO com size("Number of bytes to be written. Should be 256 | 512 | 1024 | 4096");
 	//writing data from RAM to FLASH
-	unsigned int IN[5] = {51, (unsigned int)dstAddr, (unsigned int)srcAddr, size, SystemCoreClock};
+	unsigned int IN[5] = {51, (unsigned int)dstAddr, (unsigned int)srcAddr, size, SystemCoreClock/1000};
 	iap_entry(IN, OUT);
 	return OUT[0];
 }
