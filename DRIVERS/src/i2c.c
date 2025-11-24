@@ -75,7 +75,7 @@ int I2CMASTER_Receive(unsigned char devAddress, void *data, unsigned int size){
 
 
 	//...
-	////DATA enviada
+	////DATA recebida
 	//ACK//ESPERA durante X ms o bit de aknowledge do periferico
 	//...
 
