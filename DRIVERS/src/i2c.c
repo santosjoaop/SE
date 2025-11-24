@@ -21,8 +21,9 @@
 #define SDA0_FUNC 22
 #define SCL0_FUNC 24
 
-#define I2EN 6
+#define STO 4
 #define STA 5
+#define I2EN 6
 
 
 void I2CMASTER_Init(void){
@@ -42,7 +43,10 @@ void I2CMASTER_Init(void){
 }
 
 void I2CMASTER_SetFrequency(int frequency){
+	int hl_sum = SystemCoreClock/frequency;
 
+	LPC_I2C0->I2SCLH = hl_sum/2;
+	LPC_I2C0->I2SCLL = hl_sum/2;
 
 }
 
@@ -50,7 +54,7 @@ int I2CMASTER_Transmit(unsigned char devAddress, void *data, unsigned int size){
 	//LPC_I2C0->I2CONSET = (1 << STA);
 	//START
 	//SLAVE ADRESS
-	//bit a 0 W para escrever
+	//bit a 0 W para escreverx
 	////ACK//ESPERA durante X ms o bit de aknowledge do periferico
 
 
@@ -60,6 +64,7 @@ int I2CMASTER_Transmit(unsigned char devAddress, void *data, unsigned int size){
 	//...
 
 	//STOP quando já estiver toda a data enviada
+	//LPC_I2C0->I2CONSET = (1 << STO);
 }
 
 int I2CMASTER_Receive(unsigned char devAddress, void *data, unsigned int size){
