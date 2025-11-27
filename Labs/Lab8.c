@@ -1,13 +1,7 @@
 /**
  * @file Lab8.c
- * @author Grupo 2
- * @brief
- * @version 1.0
- * @date 2025-11-24
- *
- * @copyright Copyright (c) 2025
- * 
- */
+ */
+
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
@@ -20,26 +14,34 @@
 #include "lcd.h"
 #include "i2c.h"
 
-//P0.27 Pino para Data line (SDA)
-//P0.28 Pino para Clock line (SCL)
-//P0.21 Pino para SHUTDOWN
 
+int main(void)
+{
+    DELAY_Init();
+    LCDText_Init();
 
+    I2CMASTER_Init();
+    I2CMASTER_SetFrequency(100000);   // 100 kHz I2C
 
+    LCDText_Printf("RDA5807 Test");
 
+    uint8_t reg = 0x00;   // register 0
+    uint8_t buf[2];
 
-
-int main(void){
-	DELAY_Init();
-	LCDText_Init();
-
-	while(1){
-	    	int t_atual = DELAY_GetElapsedMillis(0);
-	    	if(DELAY_GetElapsedMillis(t_atual) >= 500){
-
-	    		//I2CMASTER_Receive(0x00, void *data, unsigned int size)
-	    	}
-	}
-
+    while(1){
+		DELAY_Milliseconds(500);
+		// STEP 1: Write register address (0x00)
+		if(I2CMASTER_Transmit(0x11, &reg, 1) != 0){
+			LCDText_Printf("\nTX Error     ");
+			continue;
+		}
+		// STEP 2: Read 2 bytes from RDA5807
+		if(I2CMASTER_Receive(0x11, buf, 2) != 0){
+			LCDText_Printf("\nRX Error     ");
+			continue;
+		}
+		// Combine bytes into 16-bit value
+		uint16_t id = (buf[0] << 8) | buf[1];
+		LCDText_Printf("\nID: 0x%04X   ", id);
+    }
 }
-
