@@ -24,17 +24,6 @@
 #include "rtc.h"
 #include "func.h"
 
-/*TODO:
- *
- * carregar no botão super rapido ???
- * COVERS 							FEITO
- * mostardor frequencia / incrementador freq
- *
- * MAIN de acordo com o UML ??
- * Fazer refresh a cada minuto em vez de segundo
- */
-
-
 
 
 
@@ -46,11 +35,19 @@ int main(void) {
 	LCDText_Printf("Projecto SE\nGrupo 2");
 	DELAY_Milliseconds(5000);
 
+
+
     while(1){
     	Operation_MODE();
     	Menu_MODE();
     	//DELAY entre modos evitar problemas de inputs no proximo
-    	Config_MODE();
+
+    	switch(Config_MODE()){
+    		case -1: LCD_Cover("Invalid date\nCancelled!", 1500); break;
+    		case 0:  LCD_Cover("Cancelled!", 1500); break;
+    		case 1:  LCD_Cover("Valid date\nSaved!", 1500); break;
+
+    	}
     	//if == 0  CANCEL
     	//if == -1 INVALID DATE/CANCEL
     	//if == 1  VALID DATE/SAVE
