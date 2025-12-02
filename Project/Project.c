@@ -39,7 +39,6 @@
 
 
 int main(void) {
-    printf("Hello World\n");
     Inits();
 
     //INIT COVER
@@ -55,6 +54,8 @@ int main(void) {
     	//if == 0  CANCEL
     	//if == -1 INVALID DATE/CANCEL
     	//if == 1  VALID DATE/SAVE
+
+    	//LCDText_Printf("Volume:%d\nFreq:%f", volume, freq);
 
 
     }
