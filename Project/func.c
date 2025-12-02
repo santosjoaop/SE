@@ -20,13 +20,12 @@
 
 
 
-void LCDTime_Print(struct tm* data, int BlinkField, int changes){
+void LCDTime_Print(struct tm* data, int BlinkField, int changes, float freq){
 	char buf[20];
 	sprintf(buf,"%02d:%02d %02d/%02d/%04d", data->tm_hour, data->tm_min, data->tm_mday, data->tm_mon + 1, data->tm_year + 1900);
 
 	if(BlinkField < 0){
-		LCDText_Clear();
-		LCDText_Printf("%s", buf);
+		LCDText_Printf("%s\nFreq:%.1fMhz", buf, freq);
 	}
 	else{
 		static uint32_t lastBlinkTime = 0;
@@ -64,6 +63,8 @@ void LCDVolume_Print(int volume){
 
 	LCDText_Printf("     VOLUME     \n%s", bar);
 }
+
+
 
 int ValidDate(struct tm* data){
 	int year = data->tm_year + 1900;
@@ -132,81 +133,67 @@ void Inits(void){
     NAVBTN_Init();
     DELAY_Init();
     LCDText_Init();
-    RTC_Init(time(NULL));						//apenas funciona com pc ligago
-    //RTC_Init(1762180178);						//independente
+    //RTC_Init(time(NULL));						//apenas funciona com pc ligago
+    RTC_Init(1763396150);						//independente
+    ///Set do volume e freq guardado em memória ao entrar em funcionamento
 }
 
-/*
-void SetVolume_MODE(int *volume){
+
+void SetVolume_MODE(int* volume){
 	int t_atual = DELAY_GetElapsedMillis(0);
+	LCDText_Clear();
+	LCDVolume_Print(*volume);
 
-	switch(NAVBTN_Read()){					//Leitura do butão
-		case NAVBTN_UP:						//Aumentar o volume
-			t_atual = DELAY_GetElapsedMillis(0);
-			if(*volume != 14) *volume++;
-			LCDVolume_Print(*volume);
-			DELAY_Milliseconds(1000);
-			break;
+	while(DELAY_GetElapsedMillis(t_atual) <= 2000){
+		switch(NAVBTN_Read()){					//Leitura do butão
+			case NAVBTN_UP:						//Aumentar o volume
+				t_atual = DELAY_GetElapsedMillis(0);
+				if(*volume != 14) (*volume)++;
+				LCDVolume_Print(*volume);
+				break;
 
-		case NAVBTN_DOWN:					//Baixar o volume
-			t_atual = DELAY_GetElapsedMillis(0);
-			if(*volume != 0) *volume--;
-			LCDVolume_Print(*volume);
-			DELAY_Milliseconds(1000);
-			break;
-
-		default:
-			if(DELAY_GetElapsedMillis(t_atual) <= 2000) return;
-
+			case NAVBTN_DOWN:					//Baixar o volume
+				t_atual = DELAY_GetElapsedMillis(0);
+				if(*volume != 0) (*volume)--;
+				LCDVolume_Print(*volume);
+				break;
+			default:
+				break;
+		}
 	}
-}*/
+}
 
 
 
 void Operation_MODE(void){
 	struct tm now = {0};
 	int volume = 0;
+	float freq = 123.4;
 	while(1){
 		if(LPC_RTC->ILR & (1 << 0)){			//verificar se house interrupt de incremneto de segundos
 			LPC_RTC->ILR |= (1 << 0); 			//clear ao registo de incremento
 			RTC_GetTimeDate(&now);
-			LCDTime_Print(&now, -1, 0);
-		 }
+			LCDTime_Print(&now, -1, 0, freq);
+		}
 
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
-				LCDText_Clear();
 				if(volume != 14) volume++;
-				LCDVolume_Print(volume);
-				DELAY_Milliseconds(1000);
+				SetVolume_MODE(&volume);
+				LCDText_Clear();
 				break;
 
 			case NAVBTN_DOWN:					//Baixar o volume
-				LCDText_Clear();
 				if(volume != 0) volume--;
-				LCDVolume_Print(volume);
-				DELAY_Milliseconds(1000);
-				break;
-
-			case NAVBTN_RIGHT:					//Aumentar a frequencia
+				SetVolume_MODE(&volume);
 				LCDText_Clear();
-				LCDText_Printf("Freq +");
-				DELAY_Milliseconds(1000);
 				break;
 
-			case NAVBTN_LEFT:					//Baixar a frequencia
-				LCDText_Clear();
-				LCDText_Printf("Freq -");
-				DELAY_Milliseconds(1000);
-				break;
-
-			case NAVBTN_ENTER:					//Sair do Operation_MODE, irá entrar no Config_MODE
-				return;
-
-			default:
-			    break;
+			case NAVBTN_RIGHT: freq++; break;	//Aumentar a frequencia
+			case NAVBTN_LEFT:  freq--; break;	//Baixar a frequencia
+			case NAVBTN_ENTER: return;					//Sair do Operation_MODE, irá entrar no Config_MODE
+			default: break;
 		}
-
 	}
 }
 
@@ -229,7 +216,7 @@ int Config_MODE(void){
 
 
 	LCDText_Clear();
-	LCDTime_Print(&saved, field, 0);
+	LCDTime_Print(&saved, field, 0, -1);
 
 
 	while(1){
@@ -254,8 +241,7 @@ int Config_MODE(void){
 				changed = 1;
 				break;
 
-			case NAVBTN_BACK:
-				//não altera registos do RTC
+			case NAVBTN_BACK:								//cancelar alterações
 				return 0;
 
 			case NAVBTN_ENTER:
@@ -267,7 +253,7 @@ int Config_MODE(void){
 				changed = 0;
 				break;
 		}
-		LCDTime_Print(&saved, field, changed);		//só vai haver um novo print se houver alteração de campos
+		LCDTime_Print(&saved, field, changed, -1);		//só vai haver um novo print se houver alteração de campos
 		DELAY_Milliseconds(50);
 	}
 	return -2;
