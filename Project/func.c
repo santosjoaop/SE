@@ -17,39 +17,47 @@
 #include "rtc.h"
 #include <stdio.h>
 
+void LCD_Cover(char* str, int time){
+	LCDText_Clear();
+	LCDText_Printf("%s", str);
+	DELAY_Milliseconds(time);
+}
 
 
 
-void LCDTime_Print(struct tm* data, int BlinkField, int changes, float freq){
+void LCD_Time(struct tm* data, float freq){
+	char buf[20];
+	sprintf(buf,"%02d:%02d %02d/%02d/%04d", data->tm_hour, data->tm_min, data->tm_mday, data->tm_mon + 1, data->tm_year + 1900);
+	LCDText_Printf("%s\nFreq:%.1fMhz    ", buf, freq);
+}
+
+
+void LCD_Time_Blink(struct tm* data, int BlinkField, int changes){
 	char buf[20];
 	sprintf(buf,"%02d:%02d %02d/%02d/%04d", data->tm_hour, data->tm_min, data->tm_mday, data->tm_mon + 1, data->tm_year + 1900);
 
-	if(BlinkField < 0){
-		LCDText_Printf("%s\nFreq:%.1fMhz", buf, freq);
+
+	static uint32_t lastBlinkTime = 0;
+	static int blinkState = 0;
+	static int prevBlinkState = -1;
+
+	if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
+		blinkState ^= 1;  // toggle on/off
+		lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
 	}
-	else{
-		static uint32_t lastBlinkTime = 0;
-		static int blinkState = 0;
-		static int prevBlinkState = -1;
 
-		if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
-			blinkState ^= 1;  // toggle on/off
-			lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
-		}
-
-		if(changes || blinkState != prevBlinkState){
-			if(blinkState == 0){ // hide selected field
-				switch(BlinkField){
-					case 0: buf[0] = buf[1] = ' '; break;               			//horas
-					case 1: buf[3] = buf[4] = ' '; break;               			//minutos
-					case 2: buf[6] = buf[7] = ' '; break;               			//dias
-					case 3: buf[9] = buf[10] = ' '; break;              			//mes
-					case 4: buf[12] = buf[13] = buf[14] = buf[15] = ' '; break; 	//ano
-				}
+	if(changes || blinkState != prevBlinkState){
+		if(blinkState == 0){ // hide selected field
+			switch(BlinkField){
+				case 0: buf[0] = buf[1] = ' '; break;               			//horas
+				case 1: buf[3] = buf[4] = ' '; break;               			//minutos
+				case 2: buf[6] = buf[7] = ' '; break;               			//dias
+				case 3: buf[9] = buf[10] = ' '; break;              			//mes
+				case 4: buf[12] = buf[13] = buf[14] = buf[15] = ' '; break; 	//ano
 			}
-			LCDText_Printf("%s", buf);
-			prevBlinkState = blinkState;
 		}
+		LCDText_Printf("%s", buf);
+		prevBlinkState = blinkState;
 	}
 }
 
@@ -68,11 +76,10 @@ void LCDVolume_Print(int volume){
 
 int ValidDate(struct tm* data){
 	int year = data->tm_year + 1900;
-
 	int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 	if(data->tm_mon + 1 == 2){
-		if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))) daysInMonth[1] = 29;
+		if((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0)))daysInMonth[1] = 29;
 	}
 
 	if(data->tm_mday > daysInMonth[data->tm_mon]) return 0;
@@ -124,6 +131,12 @@ int ChangeTime(struct tm* data ,int field, int a){
 	return 0;
 }
 
+/*
+int ChangeFreq(){
+	return 0;
+}
+*/
+
 
 
 
@@ -134,7 +147,7 @@ void Inits(void){
     DELAY_Init();
     LCDText_Init();
     //RTC_Init(time(NULL));						//apenas funciona com pc ligago
-    RTC_Init(1763396150);						//independente
+    RTC_Init(1763396150);
     ///Set do volume e freq guardado em memória ao entrar em funcionamento
 }
 
@@ -167,13 +180,18 @@ void SetVolume_MODE(int* volume){
 
 void Operation_MODE(void){
 	struct tm now = {0};
+	///
 	int volume = 0;
-	float freq = 123.4;
+	float freq = 93.4;
+	float ch_spacing = 0.1;
+	int jump = 0;
+	///
+
 	while(1){
 		if(LPC_RTC->ILR & (1 << 0)){			//verificar se house interrupt de incremneto de segundos
 			LPC_RTC->ILR |= (1 << 0); 			//clear ao registo de incremento
 			RTC_GetTimeDate(&now);
-			LCDTime_Print(&now, -1, 0, freq);
+			LCD_Time(&now,freq);
 		}
 
 		switch(NAVBTN_Read()){					//Leitura do butão
@@ -189,10 +207,31 @@ void Operation_MODE(void){
 				LCDText_Clear();
 				break;
 
-			case NAVBTN_RIGHT: freq++; break;	//Aumentar a frequencia
-			case NAVBTN_LEFT:  freq--; break;	//Baixar a frequencia
 			case NAVBTN_ENTER: return;					//Sair do Operation_MODE, irá entrar no Config_MODE
 			default: break;
+		}
+
+		switch(NAVBTN_Pressed()){					//Leitura do butão
+			case NAVBTN_RIGHT:					//Aumentar a frequencia
+				if(freq + ch_spacing <= 108.0) freq += ch_spacing;
+				else freq = 108;
+				//XXX afetar no radio
+				break;
+			case NAVBTN_LEFT:					//Baixar a frequencia
+				if(freq - ch_spacing >= 76.0) freq -= ch_spacing;
+				else freq = 76;
+				//XXX afetar no radio
+				break;
+
+			case NAVBTN_CENTER:					//Baixar a frequencia
+				jump = (jump + 1) % 3;
+				if(jump == 0)ch_spacing = 0.1;
+				if(jump == 1)ch_spacing = 1;
+				if(jump == 2)ch_spacing = 5;
+				break;
+
+			default:
+				break;
 		}
 	}
 }
@@ -206,8 +245,6 @@ int Menu_MODE(void){
 }
 
 
-
-
 int Config_MODE(void){
 	int field = 0;								//campo a ser alterado
 	int changed = 0;
@@ -216,7 +253,7 @@ int Config_MODE(void){
 
 
 	LCDText_Clear();
-	LCDTime_Print(&saved, field, 0, -1);
+	LCD_Time_Blink(&saved, field, 0);
 
 
 	while(1){
@@ -231,15 +268,6 @@ int Config_MODE(void){
 				changed = 1;
 				break;
 
-			case NAVBTN_RIGHT:
-				field = (field + 1) % 5;
-				changed = 1;
-				break;
-
-			case NAVBTN_LEFT:
-				field = (field + 4) % 5;
-				changed = 1;
-				break;
 
 			case NAVBTN_BACK:								//cancelar alterações
 				return 0;
@@ -253,7 +281,24 @@ int Config_MODE(void){
 				changed = 0;
 				break;
 		}
-		LCDTime_Print(&saved, field, changed, -1);		//só vai haver um novo print se houver alteração de campos
+
+		switch(NAVBTN_Pressed()){					//Leitura do butão
+					case NAVBTN_RIGHT:
+						field = (field + 1) % 5;
+						changed = 1;
+						break;
+
+					case NAVBTN_LEFT:
+						field = (field + 4) % 5;
+						changed = 1;
+						break;
+
+					default:
+						break;
+		}
+
+
+		LCD_Time_Blink(&saved, field, changed);		//só vai haver um novo print se houver alteração de campos
 		DELAY_Milliseconds(50);
 	}
 	return -2;
