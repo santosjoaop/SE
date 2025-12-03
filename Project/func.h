@@ -63,10 +63,10 @@ int ChangeTime(struct tm* data, int field, int a);
 
 void Inits(Radio_flash* flash);
 void SetVolume_MODE(int* volume);
-void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash);
+void Operation_MODE(Radio_flash* flash);
 int Menu_MODE(void);
 int Time_Config_MODE(void);
-int Radio_Config_MODE(void);
+int Radio_Config_MODE();
 
 
 #endif /* _FUNC_H_ */
