@@ -202,29 +202,27 @@ void SetVolume_MODE(int* volume){
 
 
 
-void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash){
+void Operation_MODE(Radio_flash* flash){
 	struct tm now = {0};
 	///
-	int volume = 0;
-	float freq = 93.4;
 	float ch_spacing = 0.1;
 	int jump = 0;
 	///
 
 	while(1){
 		RTC_GetTimeDate(&now);
-		LCD_Time(&now,freq);
+		LCD_Time(&now,flash->freq);
 
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
-				if(volume != 14) volume++;
-				SetVolume_MODE(&volume);
+				if(flash->volume != 14) (flash->volume)++;
+				SetVolume_MODE(&flash->volume);
 				LCDText_Clear();
 				break;
 
 			case NAVBTN_DOWN:					//Baixar o volume
-				if(volume != 0) volume--;
-				SetVolume_MODE(&volume);
+				if(flash->volume != 0) (flash->volume)--;
+				SetVolume_MODE(&flash->volume);
 				LCDText_Clear();
 				break;
 
@@ -233,13 +231,13 @@ void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash){
 
 		switch(NAVBTN_Pressed()){					//Leitura do butão
 			case NAVBTN_RIGHT:					//Aumentar a frequencia
-				if(freq + ch_spacing <= 108.0) freq += ch_spacing;
-				else freq = 108;
+				if(flash->freq + ch_spacing <= 108.0) flash->freq += ch_spacing;
+				else flash->freq = 108;
 				//XXX afetar no radio
 				break;
 			case NAVBTN_LEFT:					//Baixar a frequencia
-				if(freq - ch_spacing >= 76.0) freq -= ch_spacing;
-				else freq = 76;
+				if(flash->freq - ch_spacing >= 76.0) flash->freq -= ch_spacing;
+				else flash->freq = 76;
 				//XXX afetar no radio
 				break;
 
@@ -251,7 +249,10 @@ void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash){
 				break;
 
 			case NAVBTN_BACK:					//guarda na meória os valores atiais
-				//XXX Guaradar na memória
+				uint8_t buffer[256] = {0};
+				memcpy(&buffer, flash, sizeof(*flash));
+				FLASH_EraseSector(29);
+				FLASH_WriteData((void*)ADDR_START_SECTOR_29, &buffer, sizeof(buffer));
 				LCD_Cover("Volume and freq\nsaved on memory", 1500);
 				break;
 
@@ -265,10 +266,8 @@ void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash){
 int Menu_MODE(void){
 	int field = 0;								//campo a ser alterado
 
-
 	LCDText_Clear();
 	LCD_Menu_Blink(field);
-
 
 	while(1){
 		switch(NAVBTN_Read()){					//Leitura do butão
@@ -303,6 +302,7 @@ int Menu_MODE(void){
 
 
 int Time_Config_MODE(void){
+	DELAY_Milliseconds(50);
 	int field = 0;								//campo a ser alterado
 	int changed = 0;
 	struct tm saved;
@@ -363,8 +363,26 @@ int Time_Config_MODE(void){
 }
 
 
-int Radio_Config_MODE(void){
-	//LCDVolume_Print(volume);
-	return 0;
+int Radio_Config_MODE(){
+	DELAY_Milliseconds(50);
+	Radio_flash data_flash;
+	memcpy(&data_flash, (void*)ADDR_START_SECTOR_29, sizeof(Radio_flash));
+	if(data_flash.code == 112){
+		while(1){
+			LCDText_Printf("Freq:%.1fMHz    \nVol:%d",data_flash.freq, data_flash.volume);
+			switch(NAVBTN_Pressed()){
+						case NAVBTN_BACK:  return 0;
+						case NAVBTN_ENTER:
+							FLASH_EraseSector(29);
+							return 1;
 
+						default: break;
+			}
+		}
+	}
+	else{
+		LCD_Cover("No volume and \nfreq on memory", 1500);
+		return 0;
+
+	}
 }
