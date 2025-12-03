@@ -26,9 +26,16 @@
 #include <time.h>
 
 
+#define ADDR_START_SECTOR_29 0x00078000
+
+typedef struct {
+		int code;
+		int volume;
+		float freq;
+}Radio_flash;
 
 /**
- * @brief Função gene´rica para fazer covers
+ * @brief Função generica para fazer covers
  * str string para a a cover
  * time tempo em ms a mostrar a cover
  */
@@ -39,6 +46,9 @@ void LCD_Time(struct tm* data, float freq);
 
 //função que põe o parametro a ser alterado no momento a piscar
 void LCD_Time_Blink(struct tm* data, int BlinkField, int changes);
+
+
+void LCD_Menu_Blink(int BlinkField);
 
 //print do volume
 void LCDVolume_Print(int volume);
@@ -51,11 +61,12 @@ int ChangeTime(struct tm* data, int field, int a);
 
 
 
-void Inits(void);
+void Inits(Radio_flash* flash);
 void SetVolume_MODE(int* volume);
-void Operation_MODE(void);
+void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash);
 int Menu_MODE(void);
-int Config_MODE(void);
+int Time_Config_MODE(void);
+int Radio_Config_MODE(void);
 
 
 #endif /* _FUNC_H_ */
