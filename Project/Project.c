@@ -18,44 +18,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "Nav7Btn.h"
 #include "delay.h"
 #include "lcd.h"
 #include "rtc.h"
+#include "flash.h"
 #include "func.h"
 
 
 
 
-int main(void) {
-    Inits();
+int main(void){
+	//default: só irá aparecer caso não haka nada huardado em memória
+	Radio_flash flash;
+	flash.code = 112;
+	flash.freq = 76.0;
+	flash.volume = 0;
 
-    //INIT COVER
-    LCDText_Clear();
-	LCDText_Printf("Projecto SE\nGrupo 2");
-	DELAY_Milliseconds(5000);
+	//memória com valores a ser usados
+	Radio_flash copy_flash;
+	memcpy(&copy_flash, &flash, sizeof(Radio_flash));
 
 
+    Inits(&flash);
+    LCD_Cover("Projecto SE\nGrupo 2", 5000);
 
     while(1){
-    	Operation_MODE();
-    	Menu_MODE();
-    	//DELAY entre modos evitar problemas de inputs no proximo
+    	Operation_MODE(&flash, &copy_flash);
 
-    	switch(Config_MODE()){
-    		case -1: LCD_Cover("Invalid date\nCancelled!", 1500); break;
-    		case 0:  LCD_Cover("Cancelled!", 1500); break;
-    		case 1:  LCD_Cover("Valid date\nSaved!", 1500); break;
+    	switch(Menu_MODE()){
+			case -1: break;
 
-    	}
-    	//if == 0  CANCEL
-    	//if == -1 INVALID DATE/CANCEL
-    	//if == 1  VALID DATE/SAVE
-
-    	//LCDText_Printf("Volume:%d\nFreq:%f", volume, freq);
+			case 0:
+				switch(Time_Config_MODE()){
+					case -1: LCD_Cover("Invalid date\nCancelled!", 1500); break;
+					case 0:  LCD_Cover("Cancelled!", 1500); break;
+					case 1:  LCD_Cover("Valid date\nSaved!", 1500); break;
+				}
+				break;
 
 
+			case 1: LCD_Cover("MEMORY: 103.4MHz\n-||||||||||||||+", 3000); break;
+					switch(Radio_Config_MODE()){
+						case 0: break;
+						case 1:  LCD_Cover("Volume and freq\ncleared", 1500); break;
+					}
+		}
     }
-
     return 0;
 }
