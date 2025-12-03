@@ -15,7 +15,10 @@
 #include "delay.h"
 #include "lcd.h"
 #include "rtc.h"
+#include "flash.h"
+#include "func.h"
 #include <stdio.h>
+#include <string.h>
 
 void LCD_Cover(char* str, int time){
 	LCDText_Clear();
@@ -28,7 +31,7 @@ void LCD_Cover(char* str, int time){
 void LCD_Time(struct tm* data, float freq){
 	char buf[20];
 	sprintf(buf,"%02d:%02d %02d/%02d/%04d", data->tm_hour, data->tm_min, data->tm_mday, data->tm_mon + 1, data->tm_year + 1900);
-	LCDText_Printf("%s\nFreq:%.1fMhz    ", buf, freq);
+	LCDText_Printf("%s\nFreq:%.1fMHz    ", buf, freq);
 }
 
 
@@ -59,6 +62,33 @@ void LCD_Time_Blink(struct tm* data, int BlinkField, int changes){
 		LCDText_Printf("%s", buf);
 		prevBlinkState = blinkState;
 	}
+}
+
+
+void LCD_Menu_Blink(int BlinkField){
+	char buf[20];
+	sprintf(buf,"Time    Radio   ");
+
+	static uint32_t lastBlinkTime = 0;
+	static int blinkState = 0;
+	static int prevBlinkState = -1;
+
+	if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
+		blinkState ^= 1;  // toggle on/off
+		lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
+	}
+
+	if(blinkState != prevBlinkState){
+		if(blinkState == 0){ // hide selected field
+			switch(BlinkField){
+				case 0: buf[0] = buf[1] = buf[2] = buf[3] = ' '; break;               			//time
+				case 1: buf[8] = buf[9] = buf[10] = buf[11] = buf[12] = ' '; break;               			//radio
+			}
+		}
+		LCDText_Printf("Config Menu:\n%s", buf);
+		prevBlinkState = blinkState;
+	}
+
 }
 
 
@@ -125,30 +155,24 @@ int ChangeTime(struct tm* data ,int field, int a){
 			if(newVal > 4095)newVal = 0 - 1900;
 			data->tm_year = newVal;
 			return 0;
-
-
 	}
 	return 0;
 }
 
-/*
-int ChangeFreq(){
-	return 0;
-}
-*/
 
-
-
-
-
-
-void Inits(void){
+void Inits(Radio_flash* flash){
     NAVBTN_Init();
     DELAY_Init();
     LCDText_Init();
     //RTC_Init(time(NULL));						//apenas funciona com pc ligago
     RTC_Init(1763396150);
-    ///Set do volume e freq guardado em memória ao entrar em funcionamento
+
+    Radio_flash memory;
+    memcpy(&memory, (void*)ADDR_START_SECTOR_29, sizeof(memory));
+    if(memory.code == 112){
+    	flash->freq = memory.freq;
+    	flash->volume = memory.volume;
+    }
 }
 
 
@@ -178,7 +202,7 @@ void SetVolume_MODE(int* volume){
 
 
 
-void Operation_MODE(void){
+void Operation_MODE(Radio_flash* flash, Radio_flash* copy_flash){
 	struct tm now = {0};
 	///
 	int volume = 0;
@@ -188,11 +212,8 @@ void Operation_MODE(void){
 	///
 
 	while(1){
-		if(LPC_RTC->ILR & (1 << 0)){			//verificar se house interrupt de incremneto de segundos
-			LPC_RTC->ILR |= (1 << 0); 			//clear ao registo de incremento
-			RTC_GetTimeDate(&now);
-			LCD_Time(&now,freq);
-		}
+		RTC_GetTimeDate(&now);
+		LCD_Time(&now,freq);
 
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
@@ -207,7 +228,6 @@ void Operation_MODE(void){
 				LCDText_Clear();
 				break;
 
-			case NAVBTN_ENTER: return;					//Sair do Operation_MODE, irá entrar no Config_MODE
 			default: break;
 		}
 
@@ -230,25 +250,63 @@ void Operation_MODE(void){
 				if(jump == 2)ch_spacing = 5;
 				break;
 
-			default:
+			case NAVBTN_BACK:					//guarda na meória os valores atiais
+				//XXX Guaradar na memória
+				LCD_Cover("Volume and freq\nsaved on memory", 1500);
 				break;
+
+			case NAVBTN_ENTER: return;
+			default:break;
 		}
 	}
 }
 
 
 int Menu_MODE(void){
+	int field = 0;								//campo a ser alterado
+
+
 	LCDText_Clear();
-	LCDText_Printf("MENU:\nTime    Radio");
-	DELAY_Milliseconds(3000);
-	return 0;
+	LCD_Menu_Blink(field);
+
+
+	while(1){
+		switch(NAVBTN_Read()){					//Leitura do butão
+			case NAVBTN_BACK:								//cancelar alterações
+				return -1;
+
+			case NAVBTN_ENTER:
+				if (field == 0) return 0;			//se estiver o campo "Time"a piscar ao pressionara ENTER vamos para a configuração do time
+				else return 1;						//senão vamos para a configuração do radio
+
+			default:
+				break;
+		}
+
+		switch(NAVBTN_Pressed()){					//Leitura do butão
+					case NAVBTN_RIGHT:
+					case NAVBTN_LEFT:
+						field = (field + 1) % 2;
+						break;
+
+					default:
+						break;
+		}
+
+
+		LCD_Menu_Blink(field);
+		DELAY_Milliseconds(50);
+	}
+	return -2;
 }
 
 
-int Config_MODE(void){
+
+int Time_Config_MODE(void){
 	int field = 0;								//campo a ser alterado
 	int changed = 0;
 	struct tm saved;
+	saved.tm_sec = 0;							//a cópia devo começar com os segundos a 0
 	RTC_GetTimeDate(&saved);					//guarda uma cópia de RTC atual numa struct tm
 
 
@@ -302,4 +360,11 @@ int Config_MODE(void){
 		DELAY_Milliseconds(50);
 	}
 	return -2;
+}
+
+
+int Radio_Config_MODE(void){
+	//LCDVolume_Print(volume);
+	return 0;
+
 }
