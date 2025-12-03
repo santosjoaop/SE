@@ -36,16 +36,12 @@ int main(void){
 	flash.freq = 76.0;
 	flash.volume = 0;
 
-	//memória com valores a ser usados
-	Radio_flash copy_flash;
-	memcpy(&copy_flash, &flash, sizeof(Radio_flash));
-
-
+	//no init é atualizado os valores de volume e freq caso haja algo em memória
     Inits(&flash);
     LCD_Cover("Projecto SE\nGrupo 2", 5000);
 
     while(1){
-    	Operation_MODE(&flash, &copy_flash);
+    	Operation_MODE(&flash);
 
     	switch(Menu_MODE()){
 			case -1: break;
@@ -59,11 +55,11 @@ int main(void){
 				break;
 
 
-			case 1: LCD_Cover("MEMORY: 103.4MHz\n-||||||||||||||+", 3000); break;
-					switch(Radio_Config_MODE()){
-						case 0: break;
-						case 1:  LCD_Cover("Volume and freq\ncleared", 1500); break;
-					}
+			case 1:
+				switch(Radio_Config_MODE()){
+					case 0: break;
+					case 1:  LCD_Cover("Volume and freq\ncleared", 1500); break;
+				}
 		}
     }
     return 0;
