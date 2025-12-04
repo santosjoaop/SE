@@ -92,14 +92,16 @@ void LCD_Menu_Blink(int BlinkField){
 }
 
 
-void LCDVolume_Print(int volume){
+void LCDVolume_Print(int volume, int mode){
 	char bar[20];
 	bar[0] = '-';
 	for(int i = 1; i < 15; i++)bar[i] = (i - 1 < volume ) ? '|' : ' ';
 	bar[15] = '+';
 	bar[16] = '\0';
 
-	LCDText_Printf("     VOLUME     \n%s", bar);
+	if(mode == 0)LCDText_Printf("     VOLUME     \n%s", bar);
+	if(mode == 1)LCDText_Printf("\n%s", bar);
+
 }
 
 
@@ -179,20 +181,20 @@ void Inits(Radio_flash* flash){
 void SetVolume_MODE(int* volume){
 	int t_atual = DELAY_GetElapsedMillis(0);
 	LCDText_Clear();
-	LCDVolume_Print(*volume);
+	LCDVolume_Print(*volume, 0);
 
 	while(DELAY_GetElapsedMillis(t_atual) <= 2000){
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
 				t_atual = DELAY_GetElapsedMillis(0);
 				if(*volume != 14) (*volume)++;
-				LCDVolume_Print(*volume);
+				LCDVolume_Print(*volume, 0);
 				break;
 
 			case NAVBTN_DOWN:					//Baixar o volume
 				t_atual = DELAY_GetElapsedMillis(0);
 				if(*volume != 0) (*volume)--;
-				LCDVolume_Print(*volume);
+				LCDVolume_Print(*volume, 0);
 				break;
 			default:
 				break;
@@ -248,13 +250,14 @@ void Operation_MODE(Radio_flash* flash){
 				if(jump == 2)ch_spacing = 5;
 				break;
 
-			case NAVBTN_BACK:					//guarda na meória os valores atiais
+			case NAVBTN_BACK: {					//guarda na meória os valores atiais
 				uint8_t buffer[256] = {0};
 				memcpy(&buffer, flash, sizeof(*flash));
 				FLASH_EraseSector(29);
 				FLASH_WriteData((void*)ADDR_START_SECTOR_29, &buffer, sizeof(buffer));
 				LCD_Cover("Volume and freq\nsaved on memory", 1500);
 				break;
+			}
 
 			case NAVBTN_ENTER: return;
 			default:break;
@@ -364,12 +367,15 @@ int Time_Config_MODE(void){
 
 
 int Radio_Config_MODE(){
+	LCDText_Clear();
 	DELAY_Milliseconds(50);
 	Radio_flash data_flash;
 	memcpy(&data_flash, (void*)ADDR_START_SECTOR_29, sizeof(Radio_flash));
 	if(data_flash.code == 112){
 		while(1){
-			LCDText_Printf("Freq:%.1fMHz    \nVol:%d",data_flash.freq, data_flash.volume);
+			//LCDText_Printf("Freq:%.1fMHz    \nVo:%d",data_flash.freq, data_flash.volume);
+			LCDText_Printf("Freq:%.1fMHz   ",data_flash.freq);
+			LCDVolume_Print(data_flash.volume, 1);
 			switch(NAVBTN_Pressed()){
 						case NAVBTN_BACK:  return 0;
 						case NAVBTN_ENTER:
