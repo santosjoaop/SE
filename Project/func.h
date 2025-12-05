@@ -51,13 +51,17 @@ void LCD_Time_Blink(struct tm* data, int BlinkField, int changes);
 void LCD_Menu_Blink(int BlinkField);
 
 //print do volume
-void LCDVolume_Print(int volume);
+void LCDVolume_Print(int volume, int mode);
 
 //Verifica se a data a ser guardada é válida
 int ValidDate(struct tm* data);
 
 //Altera os campos da data/hora no modo de configuração
 int ChangeTime(struct tm* data, int field, int a);
+
+//Função se verifica se existe algum botão pressionado á entrada do modo caso exista fica bliqueado nesse ciclo
+int NoBtn(void);
+
 
 
 
