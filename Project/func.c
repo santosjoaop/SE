@@ -162,6 +162,15 @@ int ChangeTime(struct tm* data ,int field, int a){
 }
 
 
+int NoBtn(void){
+	while(NAVBTN_Read() != -1){
+		;
+	}
+	return 0;
+}
+
+
+
 void Inits(Radio_flash* flash){
     NAVBTN_Init();
     DELAY_Init();
@@ -250,14 +259,13 @@ void Operation_MODE(Radio_flash* flash){
 				if(jump == 2)ch_spacing = 5;
 				break;
 
-			case NAVBTN_BACK: {					//guarda na meória os valores atiais
+			case NAVBTN_BACK:					//guarda na meória os valores atiais
 				uint8_t buffer[256] = {0};
 				memcpy(&buffer, flash, sizeof(*flash));
 				FLASH_EraseSector(29);
 				FLASH_WriteData((void*)ADDR_START_SECTOR_29, &buffer, sizeof(buffer));
 				LCD_Cover("Volume and freq\nsaved on memory", 1500);
 				break;
-			}
 
 			case NAVBTN_ENTER: return;
 			default:break;
@@ -305,7 +313,6 @@ int Menu_MODE(void){
 
 
 int Time_Config_MODE(void){
-	DELAY_Milliseconds(50);
 	int field = 0;								//campo a ser alterado
 	int changed = 0;
 	struct tm saved;
@@ -315,7 +322,6 @@ int Time_Config_MODE(void){
 
 	LCDText_Clear();
 	LCD_Time_Blink(&saved, field, 0);
-
 
 	while(1){
 		switch(NAVBTN_Read()){					//Leitura do butão
@@ -367,13 +373,12 @@ int Time_Config_MODE(void){
 
 
 int Radio_Config_MODE(){
-	LCDText_Clear();
-	DELAY_Milliseconds(50);
 	Radio_flash data_flash;
 	memcpy(&data_flash, (void*)ADDR_START_SECTOR_29, sizeof(Radio_flash));
 	if(data_flash.code == 112){
+		LCD_Cover("BACK-Cancel\nENTER-Clear mem", 2500);
+		LCDText_Clear();
 		while(1){
-			//LCDText_Printf("Freq:%.1fMHz    \nVo:%d",data_flash.freq, data_flash.volume);
 			LCDText_Printf("Freq:%.1fMHz   ",data_flash.freq);
 			LCDVolume_Print(data_flash.volume, 1);
 			switch(NAVBTN_Pressed()){
