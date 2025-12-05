@@ -58,9 +58,11 @@ int main(void){
 			case 1:
 				switch(Radio_Config_MODE()){
 					case 0: break;
-					case 1:  LCD_Cover("Volume and freq\ncleared", 1500); break;
+					case 1: LCD_Cover("Volume and freq\ncleared", 2500); break;
 				}
 		}
     }
     return 0;
 }
+
+
