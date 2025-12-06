@@ -2,7 +2,7 @@
  * @file Lab9.c
  * @author Grupo 2
  * @brief
- * @version 1.1
+ * @version 2.0
  * @date 2025-12-04
  *
  * @copyright Copyright (c) 2025
@@ -30,42 +30,17 @@ int main(void){
 
     LCDText_Printf("RDA5807 Test");
 
-    uint8_t writeBuf[3];
-    uint8_t readBuf[2];
 
+    uint16_t data;
     while(1){
         DELAY_Milliseconds(500);
 
-
-        // -------------------------------
-        // WRITE to register 0x05 (value: 0x1234)
-        // -------------------------------
-        writeBuf[0] = 0x05;    // Register address
-        writeBuf[1] = 0x88;    // High byte
-        writeBuf[2] = 0x8E;    // Low byte
-
-        if (I2CMASTER_Transmit(0x11, writeBuf, 3) != 0) {
-            LCDText_Printf("\nWrite Error");
-            continue;
-        }
+        //Radio_Write_Word(0x05, 0x0000);
+        Radio_Write_Bits(0x05, 10, 7, 4);
 
 
 
-        // -------------------------------
-        // READ register 0x05 back
-        // -------------------------------
-        uint8_t reg = 0x05;
-        if (I2CMASTER_Transmit(0x11, &reg, 1) != 0) {
-            LCDText_Printf("\nTX Error");
-            continue;
-        }
-
-        if (I2CMASTER_Receive(0x11, readBuf, 2) != 0) {
-            LCDText_Printf("\nRX Error");
-            continue;
-        }
-
-        uint16_t data = (readBuf[0] << 8) | readBuf[1];
+        Radio_Read_Word(0x05 , &data);
         LCDText_Printf("\nREG05: 0x%04X", data);
     }
 }
