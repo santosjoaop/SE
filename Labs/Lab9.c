@@ -2,7 +2,7 @@
  * @file Lab9.c
  * @author Grupo 2
  * @brief
- * @version 1.0
+ * @version 1.1
  * @date 2025-12-04
  *
  * @copyright Copyright (c) 2025
@@ -26,8 +26,7 @@ int main(void){
     DELAY_Init();
     LCDText_Init();
 
-    I2CMASTER_Init();
-    I2CMASTER_SetFrequency(100000);
+    Radio_Init();
 
     LCDText_Printf("RDA5807 Test");
 
@@ -36,6 +35,7 @@ int main(void){
 
     while(1){
         DELAY_Milliseconds(500);
+
 
         // -------------------------------
         // WRITE to register 0x05 (value: 0x1234)
@@ -48,6 +48,8 @@ int main(void){
             LCDText_Printf("\nWrite Error");
             continue;
         }
+
+
 
         // -------------------------------
         // READ register 0x05 back
