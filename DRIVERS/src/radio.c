@@ -75,35 +75,45 @@ int Radio_Init(void){
 
 
 int Radio_Write_Word(uint8_t reg, uint16_t data){
-	uint8_t writeBuf[3];
-	writeBuf[0] = reg;    					//valor hexa do registo
-	writeBuf[1] = (data >> 8) & 0xFF;  		//2ºbit do data(parte alta)
-	writeBuf[2] = data & 0xFF;				//1ºbit do data(parte baixa)
+    uint16_t regs[6];
 
-	if (I2CMASTER_Transmit(0x11, writeBuf, 3) != 0) {
-		LCDText_Printf("Write Error");
-		return -1;
-	}
+    uint8_t start = 0x02;
+    I2CMASTER_Transmit(0x11, &start, 1);
+    I2CMASTER_Receive(0x11, (uint8_t*)regs, 12);
 
-	return 0;
+    regs[reg - 2] = data;
+
+    uint8_t buffer[13];
+    buffer[0] = 0x02; // start register
+
+    for (int i = 0; i < 6; i++){
+        buffer[1 + i*2] = regs[i] >> 8;
+        buffer[2 + i*2] = regs[i] & 0xFF;
+    }
+
+    // SEND 13 BYTES: reg + 6 words
+    I2CMASTER_Transmit(0x11, buffer, 13);
+
+    return 0;
 }
 
 
-int Radio_Read_Word(uint8_t reg, uint16_t* data){
-	uint8_t readBuf[2];
 
-	if(I2CMASTER_Transmit(0x11, &reg, 1) != 0){
-		LCDText_Printf("\nTX Error");
-		return -1;
-	}
-	if(I2CMASTER_Receive(0x11, readBuf, 2) != 0){
-		LCDText_Printf("\nRX Error");
-		return -2;
-	}
+int Radio_Read_Word(uint8_t reg, uint16_t *data)
+{
+    uint8_t buf[16];
 
-	 *data = (readBuf[0] << 8) | readBuf[1];
+    // Read 16 bytes: REG0A–REG0F
+    if(I2CMASTER_Receive(0x11, buf, 16) != 0)
+        return -1;
 
-	 return 0;
+    if(reg < 0x0A || reg > 0x0F)
+        return -2; // invalid read (02–07 cannot be read)
+
+    int index = (reg - 0x0A) * 2;
+    *data = (buf[index] << 8) | buf[index+1];
+
+    return 0;
 }
 
 
@@ -147,6 +157,3 @@ int Radio_SHUTDOWN(int on){
 
 	return on;
 }
-
-
-
