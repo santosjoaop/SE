@@ -4,12 +4,13 @@
  * @brief I2C Master driver for LPC1769
  * @version 1.0
  * @date 2025-11-24
- */
-
+ *
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
-
 #include "delay.h"
 #include "lcd.h"
 #include <stdio.h>
@@ -26,122 +27,96 @@
 #define SI  3
 #define I2EN 6
 
-// Wait until the SI flag (interrupt flag) is set
-static inline void I2C_Wait(void) {
+
+
+static void I2C_Wait(void){
     while(!(LPC_I2C0->I2CONSET & (1 << SI)));
 }
 
-// Clear SI bit
-static inline void I2C_ClearSI(void) {
+
+static void I2C_ClearSI(void){
     LPC_I2C0->I2CONCLR = (1 << SI);
 }
 
 
 void I2CMASTER_Init(void){
-    // 1. Enable power to I2C0
     LPC_SC->PCONP |= (1 << PCI2C0);
 
-    // 2. Peripheral clock = CCLK/4
     LPC_SC->PCLKSEL0 &= ~(3 << PCLK_I2C0);
 
-    // 3. Configure SDA0 (P0.27) and SCL0 (P0.28)
     LPC_PINCON->PINSEL1 &= ~((3 << SDA0_FUNC) | (3 << SCL0_FUNC));
     LPC_PINCON->PINSEL1 |=  ((1 << SDA0_FUNC) | (1 << SCL0_FUNC));
 
-    // 4. Enable the I2C0 module
     LPC_I2C0->I2CONSET = (1 << I2EN);
 }
 
 
 void I2CMASTER_SetFrequency(int frequency){
-    int pclk = SystemCoreClock / 4;    // I2C0 clock
-    int divider = pclk / (2 * frequency);
+	int hl_sum = SystemCoreClock/frequency;
 
-    LPC_I2C0->I2SCLH = divider;
-    LPC_I2C0->I2SCLL = divider;
+	LPC_I2C0->I2SCLH = hl_sum/2;
+	LPC_I2C0->I2SCLL = hl_sum/2;
 }
 
 
-/**
- * @brief Transmit bytes to a slave (blocking)
- */
-int I2CMASTER_Transmit(unsigned char devAddress, void *data, unsigned int size){
-    uint8_t *bytes = (uint8_t*) data;
+int I2CMASTER_Transmit(unsigned char devAddress, void* data, unsigned int size){
+    uint8_t* bytes = (uint8_t*)data;
 
-    // Send START
     LPC_I2C0->I2CONSET = (1 << STA);
     I2C_Wait();
 
-    if (LPC_I2C0->I2STAT != 0x08)
-        return -1;  // START not sent
+    if(LPC_I2C0->I2STAT != 0x08) return -1;
 
-    // Send SLA+W
     LPC_I2C0->I2DAT = (devAddress << 1) | 0;
-    LPC_I2C0->I2CONCLR = (1 << STA); // clear start
+    LPC_I2C0->I2CONCLR = (1 << STA);
     I2C_ClearSI();
     I2C_Wait();
 
-    if (LPC_I2C0->I2STAT != 0x18)
-        return -2;  // No ACK for SLA+W
+    if(LPC_I2C0->I2STAT != 0x18) return -2;
 
-    // Send bytes
-    for (unsigned int i=0; i<size; i++) {
+    for(unsigned int i=0; i<size; i++){
         LPC_I2C0->I2DAT = bytes[i];
         I2C_ClearSI();
         I2C_Wait();
 
-        if (LPC_I2C0->I2STAT != 0x28)
-            return -3;  // No ACK for data
+        if(LPC_I2C0->I2STAT != 0x28)return -3;
     }
 
-    // STOP
+
     LPC_I2C0->I2CONSET = (1 << STO);
     I2C_ClearSI();
 
-    return 0; // success
+    return 0;
 }
 
 
-/**
- * @brief Receive bytes from a slave (blocking)
- */
-int I2CMASTER_Receive(unsigned char devAddress, void *data, unsigned int size){
-    uint8_t *bytes = (uint8_t*) data;
+int I2CMASTER_Receive(unsigned char devAddress, void* data, unsigned int size){
+    uint8_t* bytes = (uint8_t*)data;
 
-    // START
     LPC_I2C0->I2CONSET = (1 << STA);
     I2C_Wait();
 
-    if (LPC_I2C0->I2STAT != 0x08)
-        return -1;
+    if(LPC_I2C0->I2STAT != 0x08)return -1;
 
-    // SLA+R
     LPC_I2C0->I2DAT = (devAddress << 1) | 1;
     LPC_I2C0->I2CONCLR = (1 << STA);
     I2C_ClearSI();
     I2C_Wait();
 
-    if (LPC_I2C0->I2STAT != 0x40)
-        return -2;
+    if(LPC_I2C0->I2STAT != 0x40) return -2;
 
-    // Read bytes
-    for (unsigned int i=0; i<size; i++) {
-
-        if (i == size - 1)
-            LPC_I2C0->I2CONCLR = (1 << AA); // last byte → NACK
-        else
-            LPC_I2C0->I2CONSET = (1 << AA); // ACK
+    for(unsigned int i=0; i<size; i++){
+        if(i == size - 1)LPC_I2C0->I2CONCLR = (1 << AA);
+        else LPC_I2C0->I2CONSET = (1 << AA);
 
         I2C_ClearSI();
         I2C_Wait();
 
-        if (LPC_I2C0->I2STAT != 0x50 && i != size - 1)
-            return -3;
+        if (LPC_I2C0->I2STAT != 0x50 && i != size - 1) return -3;
 
         bytes[i] = LPC_I2C0->I2DAT;
     }
 
-    // STOP
     LPC_I2C0->I2CONSET = (1 << STO);
     I2C_ClearSI();
 
