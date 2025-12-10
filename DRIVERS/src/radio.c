@@ -15,8 +15,6 @@
 #include "lcd.h"
 #include "i2c.h"
 #include "radio.h"
-#include <stdio.h>
-
 
 #define P021 21
 #define PCGPIO 15
@@ -24,8 +22,9 @@
 
 
 
-
 ////////////////////////////////////////////////////////////////
+
+
 static uint16_t make_mask(int e, int s) {
     uint16_t mask = 0;
 
@@ -54,6 +53,8 @@ static uint16_t change_bits(uint16_t copy, uint16_t data, int end, int start){
 
 
 ////////////////////////////////////////////////////////////////
+
+
 int Radio_Init(void){
 	I2CMASTER_Init();
 	I2CMASTER_SetFrequency(100000);
@@ -73,8 +74,8 @@ int Radio_Init(void){
 }
 
 
-
-int Radio_Write_Word(uint8_t reg, uint16_t data){
+int Radio_Write_Word(uint8_t reg, uint16_t data)
+{
     uint16_t regs[6];
 
     uint8_t start = 0x02;
@@ -98,7 +99,6 @@ int Radio_Write_Word(uint8_t reg, uint16_t data){
 }
 
 
-
 int Radio_Read_Word(uint8_t reg, uint16_t *data)
 {
     uint8_t buf[16];
@@ -115,7 +115,6 @@ int Radio_Read_Word(uint8_t reg, uint16_t *data)
 
     return 0;
 }
-
 
 
 int Radio_Write_Bits(uint8_t reg, uint16_t data, int end, int start){
@@ -139,6 +138,7 @@ int Radio_SetVolume(int volume){
 	return 0;
 }
 
+
 int Radio_SetFreq(float freq){
 
 	return 0;
@@ -152,8 +152,9 @@ int Radio_SHUTDOWN(int on){
 
 	LPC_GPIO0 -> FIODIR |= (1<<P021);
 
-	if(on) 	LPC_GPIO0 -> FIOSET = (1<<P021); //LPC_GPIO0 -> FIOSET |= (1<<22)
-	else 	LPC_GPIO0 -> FIOCLR = (1<<P021);
+	if(on) LPC_GPIO0 -> FIOSET = (1<<P021); //LPC_GPIO0 -> FIOSET |= (1<<22)
+	else LPC_GPIO0 -> FIOCLR = (1<<P021);
 
 	return on;
 }
+
