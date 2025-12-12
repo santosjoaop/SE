@@ -1,52 +1,57 @@
 /**
  * @file Lab9.c
  * @author Grupo 2
- * @brief Antena 1 Tuner
+ * @brief
+ * @version 1.0
+ * @date 2025-12-04
+ *
+ * @copyright Copyright (c) 2025
+ *
  */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
+
 #include <cr_section_macros.h>
+
 #include <stdio.h>
+#include <string.h>
 #include "delay.h"
 #include "lcd.h"
-#include "radio.h" // Certifique-se que radio.h tem as declarações novas
+#include "i2c.h"
+#include "radio.h"
+
+
 
 int main(void){
-    uint16_t data;
-
-    // 1. Inicializações
-    DELAY_Init();
+	DELAY_Init();
     LCDText_Init();
+    Radio_Init();								//radio valores default
 
-    LCDText_Printf("Iniciando...");
+    Radio_SHUTDOWN(0);							//ligar o Amp
 
-    // Radio_Init agora faz o reset hardware e setup inicial
-    Radio_Init();
-    Radio_SHUTDOWN(0);
+    Radio_Write_Word(0x02, 0xC001);
+    Radio_Write_Word(0x03, 0x3117);
+    Radio_Write_Word(0x05, 0x0018);
 
-    // 2. Configurar Volume (0 a 15)
-    Radio_SetVolume(3); // Volume alto mas não maximo
 
-    // 3. Sintonizar 95.7 MHz (Antena 1)
-    // A função SetFreq faz o cálculo correto: (95.7 - 87) / 0.1 = Channel 87
-    Radio_SetFreq(95.7);
+    uint8_t reg = 0x05;
+	uint8_t buf[2];
 
-    // 4. Interface
-    LCDText_Clear();
-    LCDText_Printf("Antena 1 95.7");
 
-    // 5. Debug / Loop
-    while(1) {
-        // Ler RSSI (Signal Strength) do registo 0x0B
-        // O Reg 0x0B tem o RSSI nos bits [15:9]
-        Radio_Read_Word(0x0B, &data);
-        uint8_t rssi = data >> 9;
 
-        // (Opcional) Mostrar RSSI no LCD para ver se apanhou sinal
-        // LCDText_SetCursor(2, 0); // Exemplo se o LCD tiver essa func
-        LCDText_Printf("\nRSSI:%d", rssi);
+	while(1){
+		DELAY_Milliseconds(500);
+		if(I2CMASTER_Transmit(0x11, &reg, 1) != 0){
+			LCDText_Printf("\nTX Error     ");
+			continue;
+		}
+		if(I2CMASTER_Receive(0x11, buf, 2) != 0){
+			LCDText_Printf("\nRX Error     ");
+			continue;
+		}
+		uint16_t id = (buf[0] << 8) | buf[1];
+		LCDText_Printf("\nREG5: 0x%04X   ", id);
+	}
 
-        DELAY_Milliseconds(1000);
-    }
 }
