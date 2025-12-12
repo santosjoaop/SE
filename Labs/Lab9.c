@@ -32,26 +32,11 @@ int main(void){
 
     Radio_Write_Word(0x02, 0xC001);
     Radio_Write_Word(0x03, 0x3117);
-    Radio_Write_Word(0x05, 0x0018);
+    Radio_Write_Word(0x05, 0x0013);
 
 
-    uint8_t reg = 0x05;
-	uint8_t buf[2];
-
-
-
-	while(1){
-		DELAY_Milliseconds(500);
-		if(I2CMASTER_Transmit(0x11, &reg, 1) != 0){
-			LCDText_Printf("\nTX Error     ");
-			continue;
-		}
-		if(I2CMASTER_Receive(0x11, buf, 2) != 0){
-			LCDText_Printf("\nRX Error     ");
-			continue;
-		}
-		uint16_t id = (buf[0] << 8) | buf[1];
-		LCDText_Printf("\nREG5: 0x%04X   ", id);
-	}
+    uint16_t data;
+    Radio_Read_Word(0x05, &data);
+    LCDText_Printf("\nREG5: 0x%04X   ", data);
 
 }
