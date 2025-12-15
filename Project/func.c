@@ -253,10 +253,11 @@ void Operation_MODE(Radio_flash* flash){
 				break;
 
 			case NAVBTN_CENTER:					//Baixar a frequencia
-				jump = (jump + 1) % 3;
+				jump = (jump + 1) % 4;
 				if(jump == 0)ch_spacing = 0.1;
-				if(jump == 1)ch_spacing = 1;
-				if(jump == 2)ch_spacing = 5;
+				if(jump == 1)ch_spacing = 0.3;
+				if(jump == 2)ch_spacing = 1;
+				if(jump == 3)ch_spacing = 5;
 				break;
 
 			case NAVBTN_BACK:					//guarda na meória os valores atiais
