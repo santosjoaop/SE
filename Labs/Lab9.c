@@ -2,7 +2,7 @@
  * @file Lab9.c
  * @author Grupo 2
  * @brief
- * @version 2.0
+ * @version 1.0
  * @date 2025-12-04
  *
  * @copyright Copyright (c) 2025
@@ -26,17 +26,22 @@
 int main(void){
 	DELAY_Init();
     LCDText_Init();
-    Radio_Init();								//radio valores default
 
-    Radio_SHUTDOWN(0);							//ligar o Amp
 
-    Radio_Write_Word(0x02, 0xC001);
-    //Radio_Write_Word(0x03, 0x3178);			//Antena 1
-    Radio_Write_Word(0x03, 0x3B98);				//99.8 Comercial santarem
-    Radio_Write_Word(0x05, 0x0841);
+    Radio_SHUTDOWN(0);
+    DELAY_Milliseconds(200);
 
-    //Radio_SetFreq(104.3);						//M80
-    Radio_SetFreq(95.7);						//Antena 1 Monsanto
+    Radio_Init();
+    DELAY_Milliseconds(200);
+
+
+    Radio_Write_Word(0x02, 0xC001);				//Mutes enable etc
+    Radio_Write_Word(0x03, 0x2B18);				//0x0018   1 - tune  8 - WW BAND & Spacing 0.1MHz
+    Radio_Write_Word(0x05, 0x088F);				//0x0844   4 - LNAN  4 - Volume
+
+    Radio_SetVolume(15);
+
+    Radio_SetFreq(93.2);						//RFM
 
     uint16_t data;
     while(1)
