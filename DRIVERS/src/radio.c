@@ -22,6 +22,8 @@
 #define PCGPIO 15
 #define GPIO_FUNC 10
 
+#define RADIO_ADDR 0x11
+
 
 
 
@@ -58,14 +60,15 @@ int Radio_Init(void){
 	I2CMASTER_Init();
 	I2CMASTER_SetFrequency(100000);
 
-	//Register Definition Default Values
-	Radio_Write_Word(0x02,0x0000);
-	Radio_Write_Word(0x03,0x13F0);
+	/*
+	Radio_Write_Word(0x02,0xC001);
+	Radio_Write_Word(0x03,0x2B50);
+	//Radio_Write_Word(0x03,0x0018);
 	Radio_Write_Word(0x04,0x0000);
-	Radio_Write_Word(0x05,0x888B);
+	Radio_Write_Word(0x05,0x0881);//???será 41
 	Radio_Write_Word(0x06,0x0000);
 	Radio_Write_Word(0x07,0x1082);
-	Radio_Write_Word(0x08,0x0000);
+	Radio_Write_Word(0x08,0x0000);*/
 
 	return 0;
 }
@@ -78,8 +81,7 @@ int Radio_Write_Word(uint8_t reg, uint16_t data){
 	writeBuf[1] = (data >> 8) & 0xFF;  		//2ºbit do data(parte alta)
 	writeBuf[2] = data & 0xFF;				//1ºbit do data(parte baixa)
 
-	if (I2CMASTER_Transmit(0x11, writeBuf, 3) != 0) {
-		LCDText_Printf("Write Error");
+	if (I2CMASTER_Transmit(RADIO_ADDR, writeBuf, 3) != 0){
 		return -1;
 	}
 
@@ -90,12 +92,10 @@ int Radio_Write_Word(uint8_t reg, uint16_t data){
 int Radio_Read_Word(uint8_t reg, uint16_t* data){
 	uint8_t readBuf[2];
 
-	if(I2CMASTER_Transmit(0x11, &reg, 1) != 0){
-		LCDText_Printf("\nTX Error");
+	if(I2CMASTER_Transmit(RADIO_ADDR, &reg, 1) != 0){
 		return -1;
 	}
-	if(I2CMASTER_Receive(0x11, readBuf, 2) != 0){
-		LCDText_Printf("\nRX Error");
+	if(I2CMASTER_Receive(RADIO_ADDR, readBuf, 2) != 0){
 		return -2;
 	}
 
@@ -128,8 +128,8 @@ int Radio_SetVolume(int volume){
 
 int Radio_SetFreq(float freq){
 	uint16_t chan = (uint16_t)((freq - 76.0f) * 10.0f + 0.5f);	//+ 0.5f devido á imprecisão de float
-	Radio_Write_Bits(0x03, chan, 15, 6);						//alteração dos bits CHAN
-	Radio_Write_Bits(0x03, 0x18, 5, 0);							//ativação do bit de tune
+	Radio_Write_Word(0x03, (chan << 6) + 24);						//alteração dos bits CHAN
+
 	//hardware "retira o bit de tune após"
 	return 0;
 }
