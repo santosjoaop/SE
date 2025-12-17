@@ -16,6 +16,7 @@
 #include "lcd.h"
 #include "rtc.h"
 #include "flash.h"
+#include "radio.h"
 #include "func.h"
 #include <stdio.h>
 #include <string.h>
@@ -163,9 +164,7 @@ int ChangeTime(struct tm* data ,int field, int a){
 
 
 int NoBtn(void){
-	while(NAVBTN_Read() != -1){
-		;
-	}
+	while(NAVBTN_Read() != -1){continue;}
 	return 0;
 }
 
@@ -178,12 +177,18 @@ void Inits(Radio_flash* flash){
     //RTC_Init(time(NULL));						//apenas funciona com pc ligago
     RTC_Init(1763396150);
 
+    Radio_SHUTDOWN(0);
+    Radio_Init();
+
     Radio_flash memory;
     memcpy(&memory, (void*)ADDR_START_SECTOR_29, sizeof(memory));
     if(memory.code == 112){
     	flash->freq = memory.freq;
     	flash->volume = memory.volume;
     }
+
+    Radio_SetVolume(flash->volume);
+    Radio_SetFreq(flash->freq);
 }
 
 
@@ -193,6 +198,9 @@ void SetVolume_MODE(int* volume){
 	LCDVolume_Print(*volume, 0);
 
 	while(DELAY_GetElapsedMillis(t_atual) <= 2000){
+
+		Radio_SetVolume(*volume);
+
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
 				t_atual = DELAY_GetElapsedMillis(0);
@@ -218,21 +226,29 @@ void Operation_MODE(Radio_flash* flash){
 	///
 	float ch_spacing = 0.1;
 	int jump = 0;
+	float past = 0;
 	///
 
 	while(1){
 		RTC_GetTimeDate(&now);
 		LCD_Time(&now,flash->freq);
 
+		if(past != flash->freq) Radio_SetFreq(flash->freq);
+		past = flash->freq;
+
+		//NoBtn();
+
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume
 				if(flash->volume != 14) (flash->volume)++;
+				Radio_SetVolume(flash->volume);
 				SetVolume_MODE(&flash->volume);
 				LCDText_Clear();
 				break;
 
 			case NAVBTN_DOWN:					//Baixar o volume
 				if(flash->volume != 0) (flash->volume)--;
+				Radio_SetVolume(flash->volume);
 				SetVolume_MODE(&flash->volume);
 				LCDText_Clear();
 				break;
@@ -281,6 +297,8 @@ int Menu_MODE(void){
 	LCDText_Clear();
 	LCD_Menu_Blink(field);
 
+	NoBtn();
+
 	while(1){
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_BACK:								//cancelar alterações
@@ -314,6 +332,7 @@ int Menu_MODE(void){
 
 
 int Time_Config_MODE(void){
+
 	int field = 0;								//campo a ser alterado
 	int changed = 0;
 	struct tm saved;
@@ -323,6 +342,8 @@ int Time_Config_MODE(void){
 
 	LCDText_Clear();
 	LCD_Time_Blink(&saved, field, 0);
+
+	NoBtn();
 
 	while(1){
 		switch(NAVBTN_Read()){					//Leitura do butão
@@ -378,10 +399,13 @@ int Radio_Config_MODE(){
 	memcpy(&data_flash, (void*)ADDR_START_SECTOR_29, sizeof(Radio_flash));
 	if(data_flash.code == 112){
 		LCD_Cover("BACK-Cancel\nENTER-Clear mem", 2500);
+		NoBtn();
 		LCDText_Clear();
 		while(1){
 			LCDText_Printf("Freq:%.1fMHz   ",data_flash.freq);
 			LCDVolume_Print(data_flash.volume, 1);
+
+
 			switch(NAVBTN_Pressed()){
 						case NAVBTN_BACK:  return 0;
 						case NAVBTN_ENTER:
