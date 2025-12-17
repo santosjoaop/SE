@@ -19,11 +19,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "Nav7Btn.h"
 #include "delay.h"
 #include "lcd.h"
-#include "rtc.h"
-#include "flash.h"
 #include "func.h"
 
 
