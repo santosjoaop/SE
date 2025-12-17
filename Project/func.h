@@ -9,68 +9,51 @@
  * @copyright Copyright (c) 2025
  *
  */
+
 #ifndef _FUNC_H_
 #define _FUNC_H_
 
+#include <time.h>
+
 /**
- * @addtogroup DRIVERS
+ * @addtogroup PROJECT_FUNCTIONS
  * @{
  */
 
 /**
- * @defgroup _FUNC_functions
- * @brief This module provides functions for controlling _NAV7BTN_H_.
+ * @defgroup FUNC
+ * @brief This module provides functions that are useful in the ui and modes/states of the device
  *
  * @{
  */
-#include <time.h>
 
-
-#define ADDR_START_SECTOR_29 0x00078000
-
-typedef struct {
-		int code;
-		int volume;
-		float freq;
-}Radio_flash;
 
 /**
- * @brief Função generica para fazer covers
- * str string para a a cover
- * time tempo em ms a mostrar a cover
+ * @brief Check if the date to be saved is valid
+ * data date to be set on the RTC
+ * return 0 if not valid; 1 if is valid
  */
-void LCD_Cover(char* str, int time);
-
-//Print do ecrã com hora, data e a frequencia atual
-void LCD_Time(struct tm* data, float freq);
-
-//função que põe o parametro a ser alterado no momento a piscar
-void LCD_Time_Blink(struct tm* data, int BlinkField, int changes);
-
-
-void LCD_Menu_Blink(int BlinkField);
-
-//print do volume
-void LCDVolume_Print(int volume, int mode);
-
-//Verifica se a data a ser guardada é válida
 int ValidDate(struct tm* data);
 
+
 //Altera os campos da data/hora no modo de configuração
+/**
+ * @brief fucntion that changes values, used in Time_Config_MODE
+ * data tm struct to be changed
+ * field select which field is being changed (0-hour, 1-minute, 2-day, 3-month, 4-year)
+ * a blink state
+ * return ...
+ */
 int ChangeTime(struct tm* data, int field, int a);
 
+
 //Função se verifica se existe algum botão pressionado á entrada do modo caso exista fica bliqueado nesse ciclo
+/**
+ * @brief checks if a button in being pressed when entering a state,
+ * to avoid going trough through states when it was not expected
+ * return ...
+ */
 int NoBtn(void);
-
-
-
-
-void Inits(Radio_flash* flash);
-void SetVolume_MODE(int* volume);
-void Operation_MODE(Radio_flash* flash);
-int Menu_MODE(void);
-int Time_Config_MODE(void);
-int Radio_Config_MODE();
 
 
 #endif /* _FUNC_H_ */
