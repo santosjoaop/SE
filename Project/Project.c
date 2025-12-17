@@ -21,6 +21,9 @@
 #include <string.h>
 #include "delay.h"
 #include "lcd.h"
+
+#include "ui_lcd.h"
+#include "modes.h"
 #include "func.h"
 
 
