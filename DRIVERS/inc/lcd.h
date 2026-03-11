@@ -1,13 +1,23 @@
 /**
  * @file lcd.h
- * @author G2-LT51D
- * @brief Headers of fucntions
+ * @brief Header of 4-bit alphanumeric LCD driver for the LPC1769.
  *
- * @version 1.0
- * @date 2025-10-18
+ * This file contains the declarations of the functions used to initialize
+ * and control a 2-line, 16-character alphanumeric LCD in 4-bit mode
+ * using the LPC1769 GPIO. The driver allows writing characters, strings,
+ * positioning the cursor, clearing the display, and formatted text output
+ * similar to printf.
  *
- * @copyright Copyright (c) 2025
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
  *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
  */
 #ifndef _LCD_H_
 #define _LCD_H_
@@ -18,12 +28,12 @@
  */
 
 /**
- * @defgroup LCD Lcd functions
- * @brief This module provides functions for controlling LCD.
- *
+ * @defgroup LCD lcd functions
+ * @brief Implementa funções para inicialização e controlo de um display LCD alfanumérico em modo 4 bits,
+ * utilizando o GPIO do LPC1769, permitindo escrita de caracteres, strings,
+ * posicionamento do cursor e limpeza do ecrã e ainda um printf.
  * @{
  */
-#include <stdbool.h>
 
 
 void LCDGPIO_Init();
@@ -71,7 +81,9 @@ O formato da string fmt é idêntico à função printf da biblioteca standard d
  * @param ...
  *
  */
-//void LCDText_Printf(char *fmt, ...);
+void LCDText_Printf(char *fmt, ...);
 
+/** @} */ /* end of LCD */
+/** @} */ /* end of DRIVERS */
 
 #endif /* _LCD_H_ */
