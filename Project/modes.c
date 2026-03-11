@@ -1,13 +1,22 @@
 /**
  * @file modes.c
- * @author Grupo 2
- * @brief
- * @version 1.0
- * @date 2025-11-10
+ * @brief Implementation of application operation modes for the LPC1769 project.
  *
- * @copyright Copyright (c) 2025
- * 
- */
+ * This file contains the functions that manage initialization of peripherals,
+ * configuration of time, frequency, and volume, user interaction via buttons,
+ * LCD updates, and Flash memory read/write for persistent storage.
+ *
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
+ *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
+ */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
@@ -24,25 +33,30 @@
 #include <string.h>
 
 
-
 void Inits(Radio_flash* flash){
     NAVBTN_Init();
     DELAY_Init();
     LCDText_Init();
-    //RTC_Init(time(NULL));						//apenas funciona com pc ligago
     RTC_Init(1763396150);
 
     Radio_SHUTDOWN(0);
+    DELAY_Milliseconds(50);
     Radio_Init();
+    DELAY_Milliseconds(50);
 
     Radio_flash memory;
     memcpy(&memory, (void*)ADDR_START_SECTOR_29, sizeof(memory));
-    if(memory.code == 112){
-    	flash->freq = memory.freq;
-    	flash->volume = memory.volume;
+
+    if(memory.code == 112 &&
+       memory.freq >= 76.0 && memory.freq <= 108.0 &&
+       memory.volume <= 14){
+
+        flash->freq   = memory.freq;
+        flash->volume = memory.volume;
     }
 
     Radio_SetVolume(flash->volume);
+    DELAY_Milliseconds(10);
     Radio_SetFreq(flash->freq);
 }
 
@@ -56,7 +70,7 @@ void SetVolume_MODE(int* volume){
 
 		Radio_SetVolume(*volume);
 
-		switch(NAVBTN_Read()){					//Leitura do butão
+		switch(NAVBTN_Read()){					//Leitura do botão
 			case NAVBTN_UP:						//Aumentar o volume
 				t_atual = DELAY_GetElapsedMillis(0);
 				if(*volume != 14) (*volume)++;
@@ -91,7 +105,6 @@ void Operation_MODE(Radio_flash* flash){
 		if(past != flash->freq) Radio_SetFreq(flash->freq);
 		past = flash->freq;
 
-		//NoBtn();
 
 		switch(NAVBTN_Read()){					//Leitura do butão
 			case NAVBTN_UP:						//Aumentar o volume

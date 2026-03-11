@@ -1,13 +1,21 @@
 /**
  * @file ui_lcd.c
- * @author Grupo 2
- * @brief
- * @version 1.0
- * @date 2025-12-17
+ * @brief Implementation of the user interface layer for the LCD.
  *
- * @copyright Copyright (c) 2025
- * 
- */
+ * This file contains functions to display time, frequency, menus, volume,
+ * and visual indicators (blinking fields) on a 2x16 character LCD in 4-bit mode.
+ *
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
+ *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2025
+ */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
@@ -17,12 +25,12 @@
 #include <stdio.h>
 #include <string.h>
 
+
 void LCD_Cover(char* str, int time){
 	LCDText_Clear();
 	LCDText_Printf("%s", str);
 	DELAY_Milliseconds(time);
 }
-
 
 
 void LCD_Time(struct tm* data, float freq){
@@ -42,12 +50,12 @@ void LCD_Time_Blink(struct tm* data, int BlinkField, int changes){
 	static int prevBlinkState = -1;
 
 	if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
-		blinkState ^= 1;  // toggle on/off
-		lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
+		blinkState ^= 1;
+		lastBlinkTime = DELAY_GetElapsedMillis(0);
 	}
 
 	if(changes || blinkState != prevBlinkState){
-		if(blinkState == 0){ // hide selected field
+		if(blinkState == 0){
 			switch(BlinkField){
 				case 0: buf[0] = buf[1] = ' '; break;               			//horas
 				case 1: buf[3] = buf[4] = ' '; break;               			//minutos
@@ -71,15 +79,15 @@ void LCD_Menu_Blink(int BlinkField){
 	static int prevBlinkState = -1;
 
 	if(DELAY_GetElapsedMillis(lastBlinkTime) >= 350){
-		blinkState ^= 1;  // toggle on/off
-		lastBlinkTime = DELAY_GetElapsedMillis(0);  // record new timestamp
+		blinkState ^= 1;
+		lastBlinkTime = DELAY_GetElapsedMillis(0);
 	}
 
 	if(blinkState != prevBlinkState){
-		if(blinkState == 0){ // hide selected field
+		if(blinkState == 0){
 			switch(BlinkField){
 				case 0: buf[0] = buf[1] = buf[2] = buf[3] = ' '; break;               			//time
-				case 1: buf[8] = buf[9] = buf[10] = buf[11] = buf[12] = ' '; break;               			//radio
+				case 1: buf[8] = buf[9] = buf[10] = buf[11] = buf[12] = ' '; break;             //radio
 			}
 		}
 		LCDText_Printf("Config Menu:\n%s", buf);

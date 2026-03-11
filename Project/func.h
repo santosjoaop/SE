@@ -1,15 +1,22 @@
 /**
  * @file func.h
- * @author G2-LT51D
- * @brief Headers of fucntions
+ * @brief Header of auxiliary application logic functions for the LPC1769 project.
  *
- * @version 1.0
- * @date 2025-11-10
+ * This file contains declarations of helper functions for managing date and time,
+ * handling button inputs, and controlling application features such as the radio
+ * and persistent storage.
  *
- * @copyright Copyright (c) 2025
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
  *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
  */
-
 #ifndef _FUNC_H_
 #define _FUNC_H_
 
@@ -22,8 +29,8 @@
 
 /**
  * @defgroup FUNC
- * @brief This module provides functions that are useful in the ui and modes/states of the device
- *
+ * @brief Implementa funções auxiliares de lógica da aplicação,
+ * suportando a gestão de data e hora, interação com botões e controlo de funcionalidades como rádio e armazenamento.
  * @{
  */
 

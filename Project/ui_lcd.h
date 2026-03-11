@@ -1,15 +1,22 @@
 /**
  * @file ui_lcd.h
- * @author G2-LT51D
- * @brief Headers of fucntions
+ * @brief Header for the LCD user interface layer for the LPC1769 project.
  *
- * @version 1.0
- * @date 2025-12-17
+ * This file contains declarations of functions to handle the user interface
+ * on the LCD, including display of time, frequency, configuration menus,
+ * volume, and visual indicators with blinking effects for selected fields.
  *
- * @copyright Copyright (c) 2025
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
  *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
  */
-
 #ifndef _UI_LCD_H_
 #define _UI_LCD_H_
 
@@ -22,7 +29,8 @@
 
 /**
  * @defgroup UI_LCD
- * @brief This module provides functions for the UI of the device
+ * @brief Implementa a camada de interface do utilizador para o LCD, permitindo a exibição de tempo,
+ * frequência, menus de configuração, volume e indicadores visuais com efeito de piscar para campos selecionados.
  *
  * @{
  */
@@ -65,6 +73,7 @@ void LCD_Menu_Blink(int BlinkField);
  * mode 0 to use of Operation_MODE; 1 to use of Radio_Config_MODE
  */
 void LCDVolume_Print(int volume, int mode);
+
 
 
 #endif /* _UI_LCD_H_ */

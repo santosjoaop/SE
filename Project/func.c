@@ -1,13 +1,22 @@
 /**
  * @file func.c
- * @author Grupo 2
- * @brief
- * @version 1.0
- * @date 2025-11-10
+ * @brief Implementation of auxiliary application logic functions for the LPC1769 project.
  *
- * @copyright Copyright (c) 2025
- * 
- */
+ * This file contains helper functions for managing date and time, handling
+ * button input, and controlling application features such as radio and
+ * persistent storage.
+ *
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
+ *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
+ */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif

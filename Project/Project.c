@@ -1,14 +1,26 @@
 /**
  * @file Project.c
- * @author Grupo 2
- * @brief
- * @version 1.0
- * @date 2025-11-10
+ * @brief Implementation of the main program for the SE IoT LPC1769 project.
  *
- * @copyright Copyright (c) 2025
- * 
- */
-
+ * This file contains the main function responsible for:
+ *  - Initializing drivers and services
+ *  - Reading saved radio settings from Flash memory
+ *  - Displaying the startup screen
+ *  - Continuously executing operation modes, including:
+ *      - Normal operation (displaying time and controlling radio)
+ *      - Configuration modes for time and radio
+ *
+ * Course: LEETC - SV 2025/26
+ * Group: SE_IoT - Grupo 1
+ *
+ * @author Diogo Freixo (50387)
+ * @author João Santos  (51009)
+ *
+ * @version 2.0
+ * @date 11/03/2026
+ *
+ * @copyright Copyright (c) 2026
+ */
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
@@ -30,7 +42,7 @@
 
 
 int main(void){
-	//default: só irá aparecer caso não haka nada huardado em memória
+	//default: só irá aparecer caso não haja nada guardado em memória
 	Radio_flash flash;
 	flash.code = 112;
 	flash.freq = 76.0;
@@ -39,7 +51,7 @@ int main(void){
 	//no init é atualizado os valores de volume e freq caso haja algo em memória
     Inits(&flash);
     LCD_Cover("Projecto SE\nGrupo 2", 5000);
-
+	LCDText_Clear();
     while(1){
     	Operation_MODE(&flash);
 
